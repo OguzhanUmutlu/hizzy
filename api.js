@@ -388,7 +388,7 @@ class API extends EventEmitter {
                 if (!name) return;
                 const err = [];
                 this.#addImport(name, null, err);
-                if (err.length) return res.json({error: "Module not found: " + err.join(", ")});
+                if (err.length) return this.sendRawFile(".js", `throw 'Module not found: ${err.join(", ")}'`);
                 if (!this.#importMap[name]) return;
                 const rest = l.split("/").slice(2).join("/") || this.#importMains[name];
                 const content = this.#importMap[name][rest];
