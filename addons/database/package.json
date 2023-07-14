@@ -1,0 +1,6 @@
+{
+  "name": "@hizzy/database",
+  "description": "Hizzy's default database support",
+  "version": "1.0.0",
+  "main": "index.js"
+}

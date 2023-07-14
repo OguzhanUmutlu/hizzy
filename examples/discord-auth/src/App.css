@@ -1,0 +1,21 @@
+body {
+    background-color: #36393F;
+    color: white;
+    font-family: Calibri, serif;
+}
+
+input, button {
+    background-color: #494b52;
+    padding: 5px;
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: all .3s;
+    margin: 2px;
+}
+
+input:hover, button:hover {
+    scale: 1.1;
+}

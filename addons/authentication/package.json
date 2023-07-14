@@ -1,0 +1,6 @@
+{
+  "name": "@hizzy/authentication",
+  "description": "Hizzy's default authentication support",
+  "version": "1.0.0",
+  "main": "index.js"
+}

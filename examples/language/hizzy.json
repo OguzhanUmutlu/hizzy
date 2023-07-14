@@ -1,0 +1,26 @@
+{
+  "dev": true,
+  "port": 80,
+  "fileRefresh": true,
+  "autoBuild": true,
+  "listen": true,
+  "main": "Server.jsx",
+  "mainModule": true,
+  "checkConfig": true,
+  "realtime": true,
+  "static": {
+    "static": ""
+  },
+  "https": false,
+  "srcFolder": "src",
+  "connectionTimeout": 60000,
+  "keepaliveTimeout": 30000,
+  "clientKeepalive": 20000,
+  "minClientKeepalive": 8000,
+  "addons": {
+    "@hizzy/language": {
+      "directory": "langs"
+    }
+  },
+  "includeOriginalInBuild": true
+}

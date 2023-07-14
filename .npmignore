@@ -1,0 +1,11 @@
+package-lock.json
+.idea
+.vscode
+node_modules
+.build
+
+addons
+examples
+.gitignore
+.npmignore
+pb.js

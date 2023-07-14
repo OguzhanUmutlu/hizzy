@@ -1,0 +1,17 @@
+package-lock.json
+.idea
+.vscode
+node_modules
+.build
+
+examples/base-example/.build
+examples/discord-auth/.build
+examples/hooks/.build
+examples/language/.build
+examples/local-auth/.build
+examples/local-chat/.build
+examples/page-navigation/.build
+examples/sql-chat/.build
+
+examples/sql-chat/data.db
+examples/discord-auth/.env

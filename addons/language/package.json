@@ -1,0 +1,6 @@
+{
+  "name": "@hizzy/language",
+  "description": "Hizzy's default language support",
+  "version": "1.0.0",
+  "main": "index.js"
+}
