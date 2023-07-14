@@ -4,10 +4,10 @@ Hizzy is a React based modern web framework!
 
 # Installation
 
-All you have to do is:
+All you have to do is open a terminal in the directory of your project and type:
 
 ```
-npm install -g hizzy
+npx hizzy
 ```
 
 <!-- TOC -->
