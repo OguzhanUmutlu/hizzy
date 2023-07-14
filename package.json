@@ -1,7 +1,7 @@
 {
   "name": "hizzy",
   "description": "Hizzy is a React based modern web framework!",
-  "version": "0.0.6-beta",
+  "version": "0.0.7-beta",
   "main": "hizzy.min.js",
   "bin": {
     "hizzy": "./hizzy.min.js"
@@ -36,9 +36,7 @@
     "ws": "^8.13.0",
     "xml2js": "^0.6.0",
     "xss": "^1.0.14",
-    "yaml": "^2.3.1"
-  },
-  "devDependencies": {
+    "yaml": "^2.3.1",
     "@babel/core": "^7.22.5",
     "@babel/parser": "^7.22.5",
     "@babel/preset-react": "^7.22.5",
