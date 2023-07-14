@@ -24,6 +24,8 @@ npx hizzy
     * [XML Support](#xml-support)
   * [@hizzy/language](#hizzylanguage)
   * [@hizzy/authentication](#hizzyauthentication)
+    * [Local authentication](#local-authentication)
+    * [Discord authentication](#discord-authentication)
   * [@hizzy/error-overlay](#hizzyerror-overlay)
 * [🏎️ Blazingly fast and small-sized! 🏎️](#-blazingly-fast-and-small-sized-)
   * [Statistics](#statistics)
@@ -35,7 +37,7 @@ npx hizzy
   * [@server/join & @server/leave](#serverjoin--serverleave)
   * [@server/start](#serverstart)
     * [NOTE: This doesn't work when the development mode is on!](#note-this-doesnt-work-when-the-development-mode-is-on)
-      * [*Reason for the note: The @server/start runs when the server starts which is possible when it's production mode](#reason-for-the-note-the-serverstart-runs-when-the-server-starts-which-is-possible-when-its-production-mode)
+      * [Reason for the note: The @server/start runs when the server starts which is possible when it's production mode](#reason-for-the-note-the-serverstart-runs-when-the-server-starts-which-is-possible-when-its-production-mode)
 * [CLI](#cli)
   * [Providing the cd](#providing-the-cd)
     * [Example:](#example)
@@ -206,7 +208,7 @@ export default <div>Hey!</div>;
 
 ### NOTE: This doesn't work when the development mode is on!
 
-#### *Reason for the note: The @server/start runs when the server starts which is possible when it's production mode
+#### Reason for the note: The @server/start runs when the server starts which is possible when it's production mode
 
 since every file is built once per process. Unlike production mode, in development mode the files will be built every
 request, therefore it would have to run the @server/start function every REQUEST! That is usually not what you want. So
