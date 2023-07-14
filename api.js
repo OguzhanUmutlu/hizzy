@@ -28,7 +28,8 @@ const exit = (...msg) => {
 process.on("exit", () => {
     if (global.Hizzy) {
         const addons = Hizzy.getAddons();
-        for (const i in addons) addons[i].module.disable("termination");
+        for (const i in addons)
+            if (addons[i] && addons[i].module && typeof addons[i].module.disable === "function") addons[i].module.disable("termination");
     }
 });
 process.on("SIGINT", () => {
@@ -960,7 +961,7 @@ class API extends EventEmitter {
             q: {
                 description: "quit", enabled: true,
                 run: () => {
-                    printer.raw.log("%c  ✕  Stopped the process.", "color: red; font-weight: bold");
+                    printer.raw.log("%c  ✕  Stopping the process...", "color: red; font-weight: bold");
                     process.exit();
                 }
             },
@@ -971,7 +972,7 @@ class API extends EventEmitter {
             c = c.toString();
             if (c === "\x0c") return printer.clear();
             if (c === "\x03") {
-                printer.raw.log("%c  ✕  Stopped the process.", "color: red; font-weight: bold");
+                printer.raw.log("%c  ✕  Stopping the process...", "color: red; font-weight: bold");
                 process.exit();
             }
             const shortcut = shortcuts[c];

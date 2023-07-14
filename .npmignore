@@ -8,3 +8,6 @@ examples
 .gitignore
 .npmignore
 pb.js
+
+api.js
+hizzy.js

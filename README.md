@@ -2,13 +2,18 @@
 
 Hizzy is a React based modern web framework!
 
+[![](https://img.shields.io/badge/Discord-black?style=for-the-badge&logo=discord)](https://discord.gg/emAhrw3mvM)
+[![npm](https://img.shields.io/npm/v/hizzy.svg?style=for-the-badge)](https://www.npmjs.com/package/hizzy)
+
 # Installation
 
-All you have to do is open a terminal in the directory of your project and type:
+To install Hizzy type this:
 
 ```
-npx hizzy
+npm install -g hizzy
 ```
+
+To run your app, simply type: `hizzy`!
 
 <!-- TOC -->
 * [Hizzy](#hizzy)
@@ -61,7 +66,7 @@ npx hizzy
   * [onClientSideRendered()](#onclientsiderendered)
   * [onClientSideError()](#onclientsideerror)
 * [Why Hizzy?](#why-hizzy)
-* [When did Hizzy born, actually?](#when-did-hizzy-born-actually)
+* [Project history?](#project-history)
 <!-- TOC -->
 
 # Production Configuration
@@ -369,6 +374,7 @@ Hizzy!
 
 People who helped to find the name: mattmatt0990, lebouwski
 
-# When did Hizzy born, actually?
+# Project history?
 
-- June 21st 2023 1:24 PM
+- Created the project: June 21, 2023
+- First public commit: July 13, 2023

@@ -1,11 +1,16 @@
 // noinspection TypeScriptUMDGlobal
 
 (async () => {
-    window._eval_ = (..._$$R$$) => {
-        const s = _$$R$$;
-        // console.log("evaluating:", s[0]);
-        return eval(s[0]);
-    };
+    Object.defineProperty(window, "_eval_", {
+        get: () => (..._$$R$$) => {
+            const s = _$$R$$;
+            // console.log("evaluating:", s[0]);
+            return eval(s[0]);
+        }
+    });
+    Object.defineProperty(window, "__eval__", {
+        get: () => (_$$R$$) => eval(_$$R$$)
+    });
 })();
 (async () => {
     const [R, R2, T, TIMEOUT, mainFileI, filesI, DEV, EXP] = $$CONF$$;
@@ -173,10 +178,24 @@
             return str();
         }
         if (!file) {
-            d.cookie = "__hizzy__=" + key;
-            const a = await import("http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__import__/" + path));
-            d.cookie = "__hizzy__=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-            return a;
+            if (f.startsWith("https://") || f.startsWith("http://")) {
+                const response = await fetch(f);
+                const type = response.headers.get("Content-Type");
+                let content = await response.text();
+                if (type === "text/css") {
+                    let st = document.createElement("style");
+                    st.innerHTML = content;
+                    document.head.appendChild(st);
+                    return {default: st};
+                } else if (type === "application/json") return {default: JSON.parse(content)};
+                else if (type === "text/html") return {default: new DOMParser().parseFromString(content, "text/html")};
+                else if (type === "application/javascript") return __eval__(content);
+            } else {
+                d.cookie = "__hizzy__=" + key;
+                const a = await import("http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__import__/" + path));
+                d.cookie = "__hizzy__=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                return a;
+            }
         }
         const getting = {load: {}, normal: {}};
         await runCode(file.code + `${file.client.map(i => `__hizzy_get${R}__.normal.${i}=typeof ${i}!="undefined"?${i}:void 0;`).join("")}${file.clientLoad.map(i => `__hizzy_get${R}__.load.${i}=${i};`).join("")}`, [

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 module.exports = {};
 const sT = Date.now();
 global.__sT__ = sT;
