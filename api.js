@@ -706,6 +706,7 @@ class API extends EventEmitter {
     };
 
     async renderJSX(file, code, req, res, fromScript = false) {
+        if (res.headersSent) return;
         this.prepLoad(req, res);
         const r = this.random();
         if (!this.#realtime) return res.json({error: "Expected 'realtime' option in the 'hizzy.json' to be true."});

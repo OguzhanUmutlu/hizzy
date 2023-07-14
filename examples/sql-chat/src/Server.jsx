@@ -2,10 +2,8 @@ const db = new SQLite();
 await db.open();
 await db.exec(`CREATE TABLE IF NOT EXISTS messages
                (
-                   author
-                   TEXT,
-                   content
-                   TEXT
+                   author TEXT,
+                   content TEXT
                )`);
 const addMessage = global.addMessage = async (author, content) => {
     await db.run(`INSERT INTO messages (author, content)
@@ -23,3 +21,4 @@ global.broadcastMessage = async (msg, f) => {
 export default <Routes>
     <Route path="/" route="./App.jsx"/>
 </Routes>;
+
