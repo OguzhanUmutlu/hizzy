@@ -94,7 +94,13 @@ This addon adds language support to your page!
 
 ## @hizzy/authentication
 
-Coming soon...
+### Local authentication
+
+Check the [Local Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/local-auth)
+
+### Discord authentication
+
+Check the [Discord Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
 
 ## @hizzy/error-overlay
 
