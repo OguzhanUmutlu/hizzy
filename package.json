@@ -1,10 +1,17 @@
 {
   "name": "hizzy",
-  "version": "0.0.4-beta",
+  "description": "Hizzy is a React based modern web framework!",
+  "version": "0.0.5-beta",
   "main": "hizzy.min.js",
   "bin": {
     "hizzy": "node ./hizzy.min.js %*"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy"
+  },
+  "license": "MIT",
+  "author": "OguzhanUmutlu",
   "scripts": {},
   "dependencies": {
     "@iarna/toml": "^2.2.5",
