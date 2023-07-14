@@ -94,6 +94,8 @@ This addon adds these databases:
 
 This addon adds language support to your page!
 
+Check the [Language Support Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/language)
+
 ## @hizzy/authentication
 
 ### Local authentication
@@ -107,6 +109,8 @@ Check the [Discord Authentication Example on Github](https://github.com/OguzhanU
 ## @hizzy/error-overlay
 
 An addon that makes a popup for errors whenever something doesn't work which helps you maintain your project easily!
+
+This feature is not fully done.
 
 # 🏎️ Blazingly fast and small-sized! 🏎️
 

@@ -1599,11 +1599,11 @@ class API extends EventEmitter {
             return babel.transformSync(jsx, {
                 filename: extension,
                 presets: [
-                    ["@babel/preset-react", {
+                    [require("@babel/preset-react"), {
                         pragma: "R" + runtimeId,
                         pragmaFrag: "F" + runtimeId
                     }],
-                    ...(extension === ".tsx" ? ["@babel/preset-typescript"] : [])
+                    ...(extension === ".tsx" ? [require("@babel/preset-typescript")] : [])
                 ] // todo: use real decorators
             }).code;
         } catch (e) {
