@@ -1,10 +1,10 @@
 {
   "name": "hizzy",
   "description": "Hizzy is a React based modern web framework!",
-  "version": "0.0.5-beta",
+  "version": "0.0.6-beta",
   "main": "hizzy.min.js",
   "bin": {
-    "hizzy": "node ./hizzy.min.js %*"
+    "hizzy": "./hizzy.min.js"
   },
   "repository": {
     "type": "git",
