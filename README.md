@@ -139,7 +139,7 @@ export default <button onClick={helloWorld}></button>
 
 And you might be asking yourself... Can't the client see the inside of the server-sided function then?
 
-No! Only thing the client knows is that the server-sided function is called helloWorld! How amazing is that!?
+**No! Only thing the client knows is that the server-sided function is called helloWorld! How amazing is that!?**
 
 ## @server/respond
 
@@ -168,7 +168,7 @@ The `@server/join` decorator will be run when a client joins. The function will 
 
 The `@server/leave` decorator will be run when a client leaves. The function will be executed from the server side.
 
-The clients won't get any information about the functions assigned with these decorators. Not even their names.
+**The clients won't get any information about the functions assigned with these decorators. Not even their names.**
 
 An example that tells the server terminal that someone joined or left:
 
@@ -191,7 +191,7 @@ export default <div>What a peaceful page!</div>;
 The functions assigned with `@server/start` decorator will be run from server side and will run at the beginning of the
 process.
 
-The clients won't get any information about the functions assigned with this decorator. Not even their names.
+**The clients won't get any information about the functions assigned with this decorator. Not even their names.**
 
 An example that logs `I'm alive` to the server terminal when server starts:
 
@@ -224,13 +224,13 @@ Normally `hizzy` uses the current directory you are in the terminal,
 but you can specify the directory as an argument!
 
 ```
-hizzy [root]
+npx hizzy [root]
 ```
 
 ### Example:
 
 ```
-hizzy ./myDirectory/myProject
+npx hizzy ./myDirectory/myProject
 ```
 
 ## Other options
