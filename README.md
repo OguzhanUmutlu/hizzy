@@ -16,57 +16,59 @@ npm install -g hizzy
 To run your app, simply type: `hizzy`!
 
 <!-- TOC -->
+
 * [Hizzy](#hizzy)
 * [Installation](#installation)
 * [Production Configuration](#production-configuration)
 * [Built-in addons](#built-in-addons)
-  * [hizzy-database](#hizzy-database)
-    * [SQLite Support](#sqlite-support)
-    * [MongoDB Support](#mongodb-support)
-    * [MySQL Support](#mysql-support)
-    * [JSON Database Support](#json-database-support)
-    * [YAML Database Support](#yaml-database-support)
-    * [XML Support](#xml-support)
-  * [hizzy-language](#hizzy-language)
-  * [hizzy-authentication](#hizzy-authentication)
-    * [Local authentication](#local-authentication)
-    * [Discord authentication](#discord-authentication)
-  * [hizzy-error-overlay](#hizzy-error-overlay)
+    * [hizzy-database](#hizzy-database)
+        * [SQLite Support](#sqlite-support)
+        * [MongoDB Support](#mongodb-support)
+        * [MySQL Support](#mysql-support)
+        * [JSON Database Support](#json-database-support)
+        * [YAML Database Support](#yaml-database-support)
+        * [XML Support](#xml-support)
+    * [hizzy-language](#hizzy-language)
+    * [hizzy-authentication](#hizzy-authentication)
+        * [Local authentication](#local-authentication)
+        * [Discord authentication](#discord-authentication)
+    * [hizzy-error-overlay](#hizzy-error-overlay)
 * [🏎️ Blazingly fast and small-sized! 🏎️](#-blazingly-fast-and-small-sized-)
-  * [Statistics](#statistics)
+    * [Statistics](#statistics)
 * [JSX Support](#jsx-support)
 * [⚡ Instant server connection! ⚡](#-instant-server-connection-)
-  * [@server](#server)
-  * [@server/respond](#serverrespond)
-    * [You might ask, why do I have to use `await` keyword for `@server/respond` functions?](#you-might-ask-why-do-i-have-to-use-await-keyword-for-serverrespond-functions)
-  * [@server/join & @server/leave](#serverjoin--serverleave)
-  * [@server/start](#serverstart)
-    * [NOTE: This doesn't work when the development mode is on!](#note-this-doesnt-work-when-the-development-mode-is-on)
-      * [Reason for the note: The @server/start runs when the server starts which is possible when it's production mode](#reason-for-the-note-the-serverstart-runs-when-the-server-starts-which-is-possible-when-its-production-mode)
+    * [@server](#server)
+    * [@server/respond](#serverrespond)
+        * [You might ask, why do I have to use `await` keyword for `@server/respond` functions?](#you-might-ask-why-do-i-have-to-use-await-keyword-for-serverrespond-functions)
+    * [@server/join & @server/leave](#serverjoin--serverleave)
+    * [@server/start](#serverstart)
+        * [NOTE: This doesn't work when the development mode is on!](#note-this-doesnt-work-when-the-development-mode-is-on)
+            * [Reason for the note: The @server/start runs when the server starts which is possible when it's production mode](#reason-for-the-note-the-serverstart-runs-when-the-server-starts-which-is-possible-when-its-production-mode)
 * [CLI](#cli)
-  * [Providing the cd](#providing-the-cd)
-    * [Example:](#example)
-  * [Other options](#other-options)
-    * [-h or --help](#-h-or---help)
-    * [-v or --version](#-v-or---version)
-    * [-av or --advanced-version](#-av-or---advanced-version)
-    * [-b or --build](#-b-or---build)
-    * [--host](#--host)
-    * [--port=PORT](#--portport)
-    * [--dev](#--dev)
-    * [--auto-build](#--auto-build)
-    * [--debug](#--debug)
-    * [--debug-socket](#--debug-socket)
-    * [--experimental](#--experimental)
+    * [Providing the cd](#providing-the-cd)
+        * [Example:](#example)
+    * [Other options](#other-options)
+        * [-h or --help](#-h-or---help)
+        * [-v or --version](#-v-or---version)
+        * [-av or --advanced-version](#-av-or---advanced-version)
+        * [-b or --build](#-b-or---build)
+        * [--host](#--host)
+        * [--port=PORT](#--portport)
+        * [--dev](#--dev)
+        * [--auto-build](#--auto-build)
+        * [--debug](#--debug)
+        * [--debug-socket](#--debug-socket)
+        * [--experimental](#--experimental)
 * [Addon API](#addon-api)
-  * [onLoad()](#onload)
-  * [onEnable()](#onenable)
-  * [onDisable()](#ondisable)
-  * [onClientSideLoad()](#onclientsideload)
-  * [onClientSideRendered()](#onclientsiderendered)
-  * [onClientSideError()](#onclientsideerror)
+    * [onLoad()](#onload)
+    * [onEnable()](#onenable)
+    * [onDisable()](#ondisable)
+    * [onClientSideLoad()](#onclientsideload)
+    * [onClientSideRendered()](#onclientsiderendered)
+    * [onClientSideError()](#onclientsideerror)
 * [Why Hizzy?](#why-hizzy)
 * [Project history](#project-history)
+
 <!-- TOC -->
 
 # Production Configuration
@@ -109,11 +111,48 @@ Check the [Local Authentication Example on Github](https://github.com/OguzhanUmu
 
 ### Discord authentication
 
-Check the [Discord Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
+Check
+the [Discord Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
 
 ## hizzy-error-overlay
 
 An addon that makes a popup for errors whenever something doesn't work which helps you maintain your project easily!
+
+This feature is not fully done.
+
+## hizzy-api
+
+This feature is not fully done.
+
+## hizzy-helmet
+
+This addon lets you append things on the `<head>` tag using a custom tag named `<Helmet>`!
+
+Example:
+
+```jsx
+import Helmet from "hizzy-helmet";
+
+export default <>
+    <Helmet>
+        <title>Hello, world!</title>
+    </Helmet>
+    Hello, world!
+</>
+```
+
+Check the [Helmet Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/helmet)
+
+## hizzy-images
+
+An addon that adds a better progressive load to images that first shows the image's blurred version then the actual
+image.
+
+This feature is not fully done.
+
+Check the [Images Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/images)
+
+## hizzy-requests
 
 This feature is not fully done.
 
