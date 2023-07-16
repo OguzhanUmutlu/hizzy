@@ -219,7 +219,7 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
         "keepaliveTimeout": 30000,
         "clientKeepalive": 20000,
         "minClientKeepalive": 8000,
-        "addons": {},
+        "addons": [],
         "includeOriginalInBuild": true
     };
     if (!confExists || !fs.statSync(confPath).isFile()) {
@@ -278,7 +278,7 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
             fs.writeFileSync(path.join(srcPath, "App.jsx"), `const foo = 20;\nexport default <div>Hello, world! { foo * 2 }</div>`);
         } else printer.dev.debug("Skipping the creation of %c/" + conf.srcFolder + "&t because there is an existing build.", "color: orange");
     }
-    global[__PRODUCT_U__] = new (require("./api"))(dir);
+    global[__PRODUCT_U__] = new (require(path.join(__dirname, "api.min.js")))(dir);
     const mainPath = path.join(dir, conf.srcFolder, conf.main);
     const mainExtension = path.extname(mainPath);
     if (!fs.existsSync(mainPath)) {

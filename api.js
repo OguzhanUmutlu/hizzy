@@ -28,8 +28,7 @@ const exit = (...msg) => {
 process.on("exit", () => {
     if (global.Hizzy) {
         const addons = Hizzy.getAddons();
-        for (const i in addons)
-            if (addons[i] && addons[i].module && typeof addons[i].module.disable === "function") addons[i].module.disable("termination");
+        for (const i in addons) addons[i].module.disable("termination");
     }
 });
 process.on("SIGINT", () => {
@@ -209,7 +208,6 @@ class Addon {
 
     constructor(name, options) {
         if (Addon.addons[name]) return Addon.addons[name];
-        Addon.addons[name] = this;
         this.#name = name;
         this.#options = options;
     };
@@ -217,6 +215,7 @@ class Addon {
     async init() {
         const t = Date.now();
         let {name} = this;
+        Addon.addons[name] = this;
         if (this.#init) return;
         this.#init = true;
         try {
@@ -227,12 +226,16 @@ class Addon {
                 pkgPath = path.join(name, "package.json");
                 name = url.pathToFileURL(name).href;
             }*/
-            if (!fs.existsSync(pkgPath) || !fs.statSync(pkgPath).isFile()) throw new Error("No package.json found for the addon '" + name + "'.");
+            if (!fs.existsSync(pkgPath) || !fs.statSync(pkgPath).isFile()) {
+                printer.dev.fail("No package.json found for the addon %c" + name + "&t. Try installing it by using%c npm install " + name + "&t", "color: orange", "color: orange");
+                throw "";
+            }
             const cont = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
             this.#module = new (await import(url.pathToFileURL(path.join(Hizzy.directory, "node_modules", name, cont.main)))).default(cont, this.#options);
         } catch (e) {
             printer.dev.fail("Failed to require addon: %c" + this.name + "&t, disabling it...", "color: orange");
             printer.dev.error(e);
+            delete Addon.addons[name];
             return;
         }
         if (typeof this.#module.onLoad === "function") this.#module.onLoad();
@@ -991,9 +994,10 @@ class API extends EventEmitter {
             a: {
                 description: "re-enable all addons", enabled: true,
                 run: () => {
-                    for (const i in Addon.addons) Addon.addons[i].module.onDisable("shortcut");
+                    const addons = this.getAddons();
+                    for (const i in addons) addons[i].module.onDisable("shortcut");
                     printer.raw.log("%c  ✓  All addons have been disabled.", "color: green");
-                    for (const i in Addon.addons) Addon.addons[i].module.onEnable();
+                    for (const i in addons) addons[i].module.onEnable();
                     printer.raw.log("%c  ✓  All addons have been enabled.", "color: green");
                 }
             },
