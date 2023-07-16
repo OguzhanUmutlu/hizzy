@@ -86,11 +86,10 @@ if (isTerminal && optList.some(i => ["-h", "--help"].includes(i.toLowerCase())))
     printer.raw.log("%c    --host%c                   sets the hostname", "color: green", "color: yellow");
     printer.raw.log("%c    --port=PORT%c              sets the port (0 = random)", "color: green", "color: yellow");
     printer.raw.log("%c    --dev%c                    enables developer mode", "color: green", "color: yellow");
-    printer.raw.log("%c    --build%c                  forces it to build", "color: green", "color: yellow");
     printer.raw.log("%c    --open%c                   opens the app on start", "color: green", "color: yellow");
     printer.raw.log("%c    --debug%c                  enables debug messages", "color: green", "color: yellow");
     printer.raw.log("%c    --debug-socket%c           sends debug messages of sockets", "color: green", "color: yellow");
-    printer.raw.log("%c    --experimental%c           builds html/jsx injection files", "color: green", "color: yellow");
+    printer.raw.log("%c    --injections%c             builds html/jsx injection files", "color: green", "color: yellow");
     printer.raw.log("%c    --addon-init%c             initializes up an addon environment", "color: green", "color: yellow");
     process.exit();
 }
@@ -220,13 +219,7 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
         "keepaliveTimeout": 30000,
         "clientKeepalive": 20000,
         "minClientKeepalive": 8000,
-        "addons": {
-            //"@hizzy/database": {},
-            //"@hizzy/authentication": {},
-            //"@hizzy/error-overlay": {},
-            //"@hizzy/language": {container: {en: {text: "This is a text!"}}},
-            // "@hizzy/no-crash", im not sure if I should make this, it might break the framework
-        },
+        "addons": {},
         "includeOriginalInBuild": true
     };
     if (!confExists || !fs.statSync(confPath).isFile()) {
@@ -257,7 +250,8 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
         build: conf.autoBuild,
         "debug-socket": false,
         debug: false,
-        open: false
+        open: false,
+        "just-build": isOnlyBuild // todo: make conf and _argv_ not-global
     };
     Object.keys(_argv_).forEach(i => {
         if (_argv_[i] === true) return;
@@ -325,7 +319,7 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
         await Hizzy.init();
         if (_argv_.dev || conf.dev) {
             Hizzy.dev = true;
-            Hizzy.processMain(Hizzy.jsxToJS(fs.readFileSync(mainPath), mainExtension)).then(r => r);
+            await Hizzy.processMain(Hizzy.jsxToJS(fs.readFileSync(mainPath), mainExtension));
         }
         if (conf.realtime) Hizzy.enableRealtime();
         if (conf.fileRefresh) Hizzy.autoRefresh = true;

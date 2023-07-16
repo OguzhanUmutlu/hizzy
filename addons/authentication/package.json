@@ -1,6 +1,11 @@
 {
-  "name": "@hizzy/authentication",
-  "description": "Hizzy's default authentication support",
-  "version": "1.0.0",
-  "main": "index.js"
+  "name": "hizzy-authentication",
+  "description": "Hizzy's official authentication support",
+  "version": "1.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy/tree/main/addons/authentication"
+  },
+  "license": "MIT"
 }

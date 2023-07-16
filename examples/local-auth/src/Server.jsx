@@ -1,4 +1,5 @@
-global.auth = new LocalAuthentication;
+import Auth from "hizzy-authentication";
+global.auth = new Auth.LocalAuthentication;
 
 export default <Routes>
     <Route

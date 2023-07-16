@@ -1,6 +1,19 @@
 {
-  "name": "@hizzy/database",
-  "description": "Hizzy's default database support",
-  "version": "1.0.0",
-  "main": "index.js"
+  "name": "hizzy-database",
+  "description": "Hizzy's official database support",
+  "version": "1.0.2",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy/tree/main/addons/database"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "^5.6.0",
+    "sqlite": "^4.2.1",
+    "sqlite3": "^5.1.6",
+    "mysql": "^2.18.1",
+    "xml2js": "^0.6.0",
+    "yaml": "^2.3.1"
+  }
 }

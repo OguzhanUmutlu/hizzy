@@ -17,8 +17,6 @@
   "keepaliveTimeout": 30000,
   "clientKeepalive": 20000,
   "minClientKeepalive": 8000,
-  "addons": [
-    "@hizzy/authentication"
-  ],
+  "addons": ["hizzy-authentication"],
   "includeOriginalInBuild": true
 }

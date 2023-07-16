@@ -453,28 +453,6 @@ module.exports = class DatabaseAddon extends AddonModule {
     static SQLite = SQLiteDatabase;
     static MySQL = MySQLDatabase;
     static Mongo = MongoDatabase;
-
-    onEnable() {
-        global.JSON = JSONDatabase;
-        global.NestedJSON = NestedJSONDatabase;
-        global.YAML = YAMLDatabase;
-        global.NestedYAML = NestedYAMLDatabase;
-        global.XML = XML;
-        global.SQLite = SQLiteDatabase;
-        global.MySQL = MySQLDatabase;
-        global.Mongo = MongoDatabase;
-    };
-
-    onDisable(reason) {
-        global.JSON = JSONLegacy;
-        delete global.NestedJSON;
-        delete global.YAML;
-        delete global.NestedYAML;
-        delete global.XML;
-        delete global.SQLite;
-        delete global.MySQL;
-        delete global.Mongo;
-    };
 };
 /*
 todo global.ListDatabase = {

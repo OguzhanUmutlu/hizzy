@@ -1,7 +1,9 @@
 import {config} from "dotenv";
+import Auth from "hizzy-authentication";
+
 config();
 
-global.auth = new DiscordAuthentication({
+global.auth = new Auth.DiscordAuthentication({
     clientId: process.env.clientId,
     clientSecret: process.env.clientSecret,
     callbackURL: process.env.callbackURL,

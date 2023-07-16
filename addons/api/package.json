@@ -1,0 +1,11 @@
+{
+  "name": "hizzy-api",
+  "description": "Hizzy's official API support",
+  "version": "1.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy/tree/main/addons/api"
+  },
+  "license": "MIT"
+}

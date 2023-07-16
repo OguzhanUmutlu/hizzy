@@ -1,7 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const {AddonModule} = Hizzy;
-module.exports = class ErrorOverlayAddon extends AddonModule {
+
+throw new Error("Not done."); // todo
+
+module.exports = new class ErrorOverlayAddon extends AddonModule {
     #css = "";
 
     onEnable() {

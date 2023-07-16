@@ -3,6 +3,7 @@
 import {Database} from "sqlite";
 import {createConnection} from "mysql";
 import {MongoClient, MongoClientOptions} from "mongodb";
+import Hizzy from "hizzy";
 
 type XML_JSON = {
     [x: string]: XML_JSON | string,
@@ -91,16 +92,19 @@ declare class MongoDatabase extends MongoClient {
     constructor(options: MongoClientOptions);
 }
 
-declare global {
-    // @ts-ignore
-    const JSON: typeof JSONDatabase;
-    let NestedJSON: typeof NestedJSONDatabase;
-    let YAML: typeof YAMLDatabase;
-    let NestedYAML: typeof NestedYAMLDatabase;
-    let XML: {
-        parse: (xml: string) => XML_JSON | any
-    };
-    let SQLite: typeof SQLiteDatabase;
-    let MySQL: typeof MySQLDatabase;
-    let Mongo: typeof MongoDatabase;
+type XMLDatabase = {
+    parse: (xml: string) => XML_JSON | any
+};
+
+declare class DatabaseAddon extends Hizzy.API.AddonModule {
+    static JSON: typeof JSONDatabase;
+    static NestedJSON: typeof NestedJSONDatabase;
+    static YAML: typeof YAMLDatabase;
+    static NestedYAML: typeof NestedYAMLDatabase;
+    static XML: XMLDatabase;
+    static SQLite: typeof SQLiteDatabase;
+    static MySQL: typeof MySQLDatabase;
+    static Mongo: typeof MongoDatabase;
 }
+
+export = DatabaseAddon;

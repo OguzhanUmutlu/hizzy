@@ -1,6 +1,11 @@
 {
-  "name": "@hizzy/error-overlay",
-  "description": "Hizzy's default error overlay support",
-  "version": "1.0.0",
-  "main": "index.js"
+  "name": "hizzy-error-overlay",
+  "description": "Hizzy's official error overlay support",
+  "version": "1.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy/tree/main/addons/error-overlay"
+  },
+  "license": "MIT"
 }

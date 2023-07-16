@@ -1,5 +1,6 @@
 // todo: google
 // todo: github
+// todo: xbox
 // todo: facebook
 // todo: allowing custom, update: it kind of does now
 const {EventEmitter} = require("events");
@@ -149,14 +150,4 @@ module.exports = class AuthenticationAddon extends AddonModule {
     static LocalAuthentication = LocalAuthentication;
     static DiscordAuthentication = DiscordAuthentication;
     static _CookieAuth = CookieAuth;
-
-    onEnable() {
-        global.LocalAuthentication = LocalAuthentication;
-        global.DiscordAuthentication = DiscordAuthentication;
-    };
-
-    onDisable(reason) {
-        delete global.LocalAuthentication;
-        delete global.DiscordAuthentication;
-    };
 };

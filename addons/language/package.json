@@ -1,6 +1,11 @@
 {
-  "name": "@hizzy/language",
-  "description": "Hizzy's default language support",
-  "version": "1.0.0",
-  "main": "index.js"
+  "name": "hizzy-language",
+  "description": "Hizzy's official language support",
+  "version": "1.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy/tree/main/addons/language"
+  },
+  "license": "MIT"
 }

@@ -42,13 +42,12 @@ process.on("uncaughtException", error => {
 
 // todo: maybe split static into two, static and dynamic. static = cached, dynamic = not cached
 // todo: use esbuild
-// todo: add a production config to readme.md
-// todo: a good explanation about packets in docs
 // todo: compile the react element stuff in backend on startup, edit: i don't think this is possible anymore, maybe it is idk, edit: i think it is, edit: it is
 // todo: add a function that gets all client functions of a file
 // todo: IMPORTANT: it should update when css updates
 // todo: a playground in the web page, update: idk if i will do this, this requires a sandbox server, i might use something like repl.it or glitch.com
 // todo: cache file contents for the production mode
+// todo: variable transaction? like @server for variables? wouldn't work with literals. not sure if it's a good idea. they could just use currentClient.eval("variable") ? not sure if this works
 
 const random = () => crypto.getRandomValues(new Uint32Array([0]))[0].toString(36); // maybe get back to BigUint64?
 const runtimeId = random();
@@ -126,7 +125,7 @@ const ck = "__" + __PRODUCT__ + "__";
 const jsOpt = {
     mangle: {toplevel: false}
 };
-const HIZZY_EXPERIMENTAL = process.argv.includes("--experimental");
+const HIZZY_EXPERIMENTAL = process.argv.includes("--injections");
 let experimentalId = Date.now().toString(36);
 let jsxInjection, htmlInjection, preactCode, preactHooksCode;
 if (HIZZY_EXPERIMENTAL) {
@@ -148,7 +147,7 @@ if (HIZZY_EXPERIMENTAL) {
         fs.writeFileSync(path.join(__dirname, "injections/hooks.min.js"), preactHooksCode);
         fs.writeFileSync(path.join(__dirname, "injections/.last"), experimentalId);
         const sT = Date.now() - t;
-        printer.dev.pass("Experimental initialization. (%c" + timeForm(sT) + "&t)", "color: orange");
+        printer.dev.pass("Injections have been minified. (%c" + timeForm(sT) + "&t)", "color: orange");
     })();
 } else {
     jsxInjection = fs.readFileSync(path.join(__dirname, "injections/jsx.min.js"), "utf8");
@@ -220,16 +219,17 @@ class Addon {
         let {name} = this;
         if (this.#init) return;
         this.#init = true;
-        let pkgPath = path.join(name, "package.json");
-        if (name.startsWith("@hizzy/")) {
-            name = path.join(__dirname, "addons", name.substring(7)); // todo: move all of these into a new npm registry, not built-in
-            pkgPath = path.join(name, "package.json");
-            name = url.pathToFileURL(name).href;
-        }
         try {
-            if (!fs.existsSync(pkgPath) || !fs.statSync(pkgPath).isFile()) throw new Error("package.json file not found.");
+            let pkgPath = path.join(Hizzy.directory, "node_modules", name, "package.json");
+            /*
+            if (HIZZY_EXPERIMENTAL && name.startsWith("hizzy-")) {
+                name = path.join(__dirname, "addons", name.substring(6));
+                pkgPath = path.join(name, "package.json");
+                name = url.pathToFileURL(name).href;
+            }*/
+            if (!fs.existsSync(pkgPath) || !fs.statSync(pkgPath).isFile()) throw new Error("No package.json found for the addon '" + name + "'.");
             const cont = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-            this.#module = new (await import(name + path.sep + cont.main)).default(cont, this.#options);
+            this.#module = new (await import(url.pathToFileURL(path.join(Hizzy.directory, "node_modules", name, cont.main)))).default(cont, this.#options);
         } catch (e) {
             printer.dev.fail("Failed to require addon: %c" + this.name + "&t, disabling it...", "color: orange");
             printer.dev.error(e);
@@ -315,7 +315,6 @@ class API extends EventEmitter {
     #isScanningBuild = false;
     #dir;
     #buildCache = null;
-    #blurCache = null;
     #buildPromise = new Promise(r => r());
     #builtAt = null;
     #buildRuntimeId = null;
@@ -349,6 +348,9 @@ class API extends EventEmitter {
     dev = false;
     customShortcuts = {};
     preRequests = [];
+    preRawSend = [];
+    buildHandlers = {};
+    scanHandlers = {};
 
     constructor(dir) {
         if (API.API) return API.API;
@@ -380,7 +382,7 @@ class API extends EventEmitter {
                 const run = req.url.split("?")[1];
                 if (run !== runtimeId) return res.redirect("/__" + __PRODUCT__ + "__addons__?" + runtimeId);
                 //res.setHeader("Cache-Control", "max-age=31536000,immutable");
-                this.sendRawFile(".json", this.#addonCache, res);
+                await this.sendRawFile(".json", this.#addonCache, req, res);
                 return;
             }
             if (socket && l.includes("/") && l.split("/")[0] === `__${__PRODUCT__}__import__`) {
@@ -389,26 +391,26 @@ class API extends EventEmitter {
                 if (!name) return;
                 const err = [];
                 this.#addImport(name, null, err);
-                if (err.length) return this.sendRawFile(".js", `throw 'Module not found: ${err.join(", ")}'`);
+                if (err.length) return this.sendRawFile(".js", `throw 'Module not found: ${err.join(", ")}'`, req, res);
                 if (!this.#importMap[name]) return;
                 const rest = l.split("/").slice(2).join("/") || this.#importMains[name];
                 const content = this.#importMap[name][rest];
                 if (!content) return;
-                this.sendRawFile(rest, content, res);
+                await this.sendRawFile(rest, content, req, res);
                 return;
             }
             if (socket && l === "__" + __PRODUCT__ + "__preact__") {
                 const run = req.url.split("?")[1];
                 if (run !== experimentalId) return;
                 //res.setHeader("Cache-Control", "max-age=31536000,immutable");
-                this.sendRawFile(".js", preactCode, res);
+                await this.sendRawFile(".js", preactCode, req, res);
                 return;
             }
             if (socket && l === "__" + __PRODUCT__ + "__preact__hooks__") {
                 const run = req.url.split("?")[1];
                 if (run !== experimentalId) return;
                 //res.setHeader("Cache-Control", "max-age=31536000,immutable");
-                this.sendRawFile(".js", preactHooksCode, res);
+                await this.sendRawFile(".js", preactHooksCode, req, res);
                 return;
             }
             const r = i => {
@@ -421,6 +423,36 @@ class API extends EventEmitter {
             printer.dev.warn("No %c/" + conf.srcFolder + "&t found. Forcing to disable the developer mode.", "color: orange");
             this.dev = false;
         }
+        this.buildHandlers.jsx = [async (file, get, set, zip, ext, pt) => {
+            const norm = await this.readClientJSX(file, get.toString());
+            set(norm.code);
+            delete norm.code;
+            zip.file("jsx/" + pt.map(i => i + "/").join("") + file.substring(0, file.length - 4) + ".json", JSON.stringify(norm));
+        }];
+        const pureHandler = async (file, get, set, zip, ext) => {
+            set(get.length ? await minify[ext](get.toString()) : "");
+        };
+        this.buildHandlers.html = [pureHandler];
+        this.buildHandlers.js = [pureHandler];
+        this.buildHandlers.css = [pureHandler];
+
+        const sourceJSXHandler = async (file, data, files) => {
+            data = data.toString();
+            const jsxJson = "jsx/" + file.substring(0, file.length - 4) + ".json";
+            let jsonData;
+            try {
+                jsonData = JSON.parse(await files[jsxJson].async("string"));
+                await this.#pseudoBuildJSX(file, data, jsonData, this.#initFunctions);
+            } catch (e) {
+                printer.dev.warn("Couldn't scan JSX: '" + file + "', meta file is missing or corrupted. Try rebuilding.");
+                printer.dev.error(e);
+            }
+        };
+        this.scanHandlers.source = {
+            jsx: [sourceJSXHandler],
+            tsx: [sourceJSXHandler],
+            __default__: [(file, data) => this.#buildCache[file] = data]
+        };
     };
 
     findOptimalFile(file) {
@@ -698,7 +730,11 @@ class API extends EventEmitter {
             if (!c) c = "";
             if (f.endsWith(".jsx") || f.endsWith(".tsx")) await this.#builtJSX(f, c, req, res, files, pk);
             else {
-                if (c instanceof Buffer) c = [...c];
+                if (c instanceof Buffer) {
+                    const spl = f.split(".");
+                    if (["js", "html", "css"].includes(spl[spl.length - 1])) c = c.toString();
+                    else c = [...c];
+                }
                 files[f] = c;
                 pk[f] = c;
             }
@@ -718,14 +754,14 @@ class API extends EventEmitter {
             return res.send(req._RouteJSON + "\u0000" + cPages);
         }
         this.#hashes[req._uuid] = r;
-        this.sendRawFile(".html", `<script data-rm=${r} type=module>${jsxInjection
+        await this.sendRawFile(".html", `<script data-rm=${r} type=module>${jsxInjection
             .replace("$$R$$", r)
             .replace("$$R$$", r) // it's important that it's ran exactly 2 times!
             .replace("$$CONF$$", "['" + r + "','" + (this.#buildRuntimeId || runtimeId) + "'," + this.#builtAt + "," +
                 (conf.keepaliveTimeout > 0 ? conf.clientKeepalive : -1) + "," + req._RouteJSON + "," +
                 await this.#getPagePacket(file, code, req, res) + "," + (this.dev ? 1 : 0) + ",'" + experimentalId + "']"
             )
-        }</script>`, res);
+        }</script>`, req, res);
     };
 
     async #getPagePacket(file, code, req, res) {
@@ -750,14 +786,13 @@ class API extends EventEmitter {
         return pkJ;
     };
 
-    renderHTML(file, content, req, res) {
-        // todo: oauth for discord, github, google, microsoft, xbox, facebook and more
+    async renderHTML(file, content, req, res) {
         this.prepLoad(req, res);
         const r = this.random();
         this.#watchFile(req._Route);
-        this.sendRawFile(".html", content + (this.#realtime ? `<script data-rm=${r}>` + htmlInjection
+        await this.sendRawFile(".html", content + (this.#realtime ? `<script data-rm=${r}>` + htmlInjection
             .replace("$R", r)
-            .replace("$T", conf.keepaliveTimeout > 0 ? conf.clientKeepalive : -1) + `</script>` : ""), res
+            .replace("$T", conf.keepaliveTimeout > 0 ? conf.clientKeepalive : -1) + `</script>` : ""), req, res
         );
     };
 
@@ -774,8 +809,12 @@ class API extends EventEmitter {
         });
     };
 
-    sendRawFile(file, content, res) {
+    async sendRawFile(file, content, req, res, force = false) {
         if (res.headersSent) return;
+        if (!force) for (const a of this.preRawSend) {
+            await a(file, content, req, res);
+            if (res.headersSent) return;
+        }
         res.setHeader("Content-Type", mime.getType(file));
         res.send(content);
     };
@@ -793,7 +832,7 @@ class API extends EventEmitter {
             content = `export default new DOMParser().parseFromString(${JSON.stringify(content.toString())},"text/html")`;
             file += ".js";
         }
-        this.sendRawFile(file, content, res);
+        await this.sendRawFile(file, content, req, res);
     };
 
     #staticRender(req, res) {
@@ -990,19 +1029,13 @@ class API extends EventEmitter {
         if (_argv_.open) this.openInBrowser();
     };
 
-    async #buildInternal(to, dat = [0], original, src, jsx, blur) {
+    async #buildInternal(to, dat = [0], zip) {
         const srcPath = path.join(this.#dir, conf.srcFolder);
         for (const file of fs.readdirSync(path.join(srcPath, ...to))) {
             const p = path.join(srcPath, ...to, file);
             if (!fs.existsSync(p)) continue;
             if (fs.statSync(p).isDirectory()) {
-                await this.#buildInternal(
-                    [...to, file], dat,
-                    original ? original.folder(file) : null,
-                    src.folder(file),
-                    jsx.folder(file),
-                    blur.folder(file)
-                );
+                await this.#buildInternal([...to, file], dat, zip);
                 continue;
             }
             const actualContent = fs.readFileSync(p);
@@ -1011,31 +1044,16 @@ class API extends EventEmitter {
             let ext = file.split(".");
             ext = ext[ext.length - 1];
             try {
-                if (ext === "jsx") {
-                    const norm = await this.readClientJSX(file, actualContent.toString());
-                    content = norm.code;
-                    delete norm.code;
-                    jsx.file(file.substring(0, file.length - 4) + ".json", JSON.stringify(norm));
-                } else if (["html", "js", "css"].includes(ext)) {
-                    content = actualContent.length ? await minify[ext](actualContent.toString()) : "";
-                } else if (["jpeg", "jpg", "png", "webp", "gif", "avif"].includes(ext)) {
-                    const img = require("sharp")(content);
-                    const {width, height} = await img.metadata();
-                    const ratio = width / height;
-                    const fixed = 100;
-                    blur.file(file, "data:" + mime.getType(file) + ";base64," + (await img.resize({
-                        width: fixed * ratio,
-                        height: fixed / ratio
-                    }).toBuffer()).toString("base64"));
-                }
+                const handler = this.buildHandlers[ext];
+                if (handler && handler.length) for (const h of handler) await h(file, content, v => content = v, zip, ext, to);
             } catch (err) {
                 printer.dev.fail("Failed to build: " + path.join(...to, file));
                 printer.dev.error(err);
                 dat[0]++;
                 e = true;
             }
-            src.file(file, content);
-            if (original) original.file(file, actualContent);
+            zip.file("source/" + to.map(i => i + "/").join("") + file, content);
+            if (conf.includeOriginalInBuild) zip.file("original/" + to.join("/"), actualContent);
             if (!e) printer.dev.debug("Built " + path.join(...to, file));
         }
     };
@@ -1051,11 +1069,7 @@ class API extends EventEmitter {
             let dat = [0];
             const zip = new (require("jszip"))();
             await this.#buildInternal(
-                [], dat,
-                conf.includeOriginalInBuild ? zip.folder("original") : null,
-                zip.folder("source"),
-                zip.folder("jsx"),
-                zip.folder("blur")
+                [], dat, zip
             );
             /*const modules = zip.folder("node_modules");
             const modulesPath = path.join(this.#dir, "node_modules");
@@ -1074,7 +1088,7 @@ class API extends EventEmitter {
                 }
                 if (typeof pkg !== "object" || pkg === null || Array.isArray(pkg)) continue;
                 const {main, type} = pkg;
-                let bundled;
+                let built;
                 try {
                     const opts = {
                         entryPoints: [path.join(p2, main)],
@@ -1083,7 +1097,7 @@ class API extends EventEmitter {
                         outdir: path.join(this.#dir, "_out_")
                     };
                     if (type === "module") opts.format = "esm";
-                    bundled = await build(opts);
+                    built = await build(opts);
                 } catch (e) {
                     printer.dev.fail("Failed to build: " + p2);
                     printer.dev.error(e);
@@ -1125,7 +1139,6 @@ class API extends EventEmitter {
         if (!fs.existsSync(path.join(this.#dir, ".build"))) await this.build();
         this.#isScanningBuild = true;
         this.#buildCache = {};
-        this.#blurCache = {};
         this.#jsxCache = {};
         this.#builtJSXCache = {};
         this.#builtJSXPage = {};
@@ -1168,28 +1181,20 @@ class API extends EventEmitter {
                 continue;
             }
             //if (isExtracting) fs.writeFileSync(path.join(this.#dir, conf.srcFolder, file), data);
-            if (file.startsWith("source/")) {
-                const fileNormal = file.substring(7);
-                if (file.endsWith(".jsx") || file.endsWith(".tsx")) {
-                    data = data.toString();
-                    const jsxJson = "jsx/" + file.substring(7, file.length - 4) + ".json";
-                    let jsonData;
-                    try {
-                        jsonData = JSON.parse(await zip.files[jsxJson].async("string"));
-                        await this.#pseudoBuildJSX(fileNormal, data, jsonData, this.#initFunctions);
-                    } catch (e) {
-                        printer.dev.warn("Couldn't scan JSX: '" + fileNormal + "', meta file is missing or corrupted. Try rebuilding.");
-                        printer.dev.error(e);
-                    }
-                } else this.#buildCache[fileNormal] = data;
-            } else if (file.startsWith("blur/")) {
-                const fileNormal = file.substring(5);
-                this.#blurCache[fileNormal] = "data:" + mime.getType(fileNormal) + ";base64," + Buffer.from(data).toString("base64");
+            const folder = file.split("/")[0];
+            const handler = this.scanHandlers[folder];
+            if (handler) {
+                const spl = file.split(".");
+                let ext = spl[spl.length - 1];
+                if (ext === "__default__") ext = null;
+                const fHandler = (ext && handler[ext]) || handler.__default__;
+                if (fHandler && fHandler.length)
+                    for (const fh of fHandler) await fh(file.substring(folder.length + 1), data, zip.files);
             }
         }
         if (!builtAt) return exit("Invalid build: No timestamp found! Try rebuilding.");
         if (!buildRuntimeId) return exit("Invalid build: No runtime ID found for the build! Try rebuilding.");
-        //if (fs.existsSync(tmpdir)) fs.rmSync(tmpdir, {recursive: true});
+        // if (fs.existsSync(tmpdir)) fs.rmSync(tmpdir, {recursive: true});
         const dt = Date.now() - d;
         printer.dev.pass("Scanned the build. (%c" + timeForm(dt) + "&t)", "color: orange");
         this.#isScanningBuild = false;
@@ -1593,7 +1598,7 @@ class API extends EventEmitter {
     };
 
     getAddon(name) {
-        return Addon.addons[name] || null; // todo: don't use sharp package by default and make the blur effect an addon
+        return Addon.addons[name] || null;
     };
 
     jsxToJS(jsx, extension) {

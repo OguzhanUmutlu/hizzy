@@ -5,7 +5,7 @@ module.exports = class LanguageAddon extends AddonModule {
     onEnable() {
         const directory = this.options.directory;
         if (typeof directory !== "string" || !fs.existsSync(path.join(Hizzy.directory, directory)) || !fs.statSync(path.join(Hizzy.directory, directory)).isDirectory()) {
-            return this.disable("not having a valid 'directory' property as a directory path in the '@hizzy/language' configuration.");
+            return this.disable("not having a valid 'directory' property as a directory path in the 'hizzy-language' configuration.");
         }
         const container = {};
         fs.readdirSync(path.join(Hizzy.directory, directory)).forEach(i => {
@@ -32,7 +32,7 @@ module.exports = class LanguageAddon extends AddonModule {
                 language: {
                     get: () => lang,
                     set: s => {
-                        if (!container[lang]) throw new Error("@hizzy/language: Invalid language: " + lang);
+                        if (!container[lang]) throw new Error("hizzy-language: Invalid language: " + lang);
                         lang = s;
                         hooks.forEach(([s, k]) => s(container[lang][k] || ""));
                     }
@@ -47,7 +47,7 @@ module.exports = class LanguageAddon extends AddonModule {
                     get: () => {
                         const L = Object.keys(container);
                         let index = L.indexOf(lang);
-                        if (index === -1) throw new Error("@hizzy/language: Invalid language!");
+                        if (index === -1) throw new Error("hizzy-language: Invalid language!");
                         if (index === L.length - 1) index = -1;
                         return L[index + 1];
                     }

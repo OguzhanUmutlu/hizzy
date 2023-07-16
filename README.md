@@ -20,18 +20,18 @@ To run your app, simply type: `hizzy`!
 * [Installation](#installation)
 * [Production Configuration](#production-configuration)
 * [Built-in addons](#built-in-addons)
-  * [@hizzy/database](#hizzydatabase)
+  * [hizzy-database](#hizzy-database)
     * [SQLite Support](#sqlite-support)
     * [MongoDB Support](#mongodb-support)
     * [MySQL Support](#mysql-support)
     * [JSON Database Support](#json-database-support)
     * [YAML Database Support](#yaml-database-support)
     * [XML Support](#xml-support)
-  * [@hizzy/language](#hizzylanguage)
-  * [@hizzy/authentication](#hizzyauthentication)
+  * [hizzy-language](#hizzy-language)
+  * [hizzy-authentication](#hizzy-authentication)
     * [Local authentication](#local-authentication)
     * [Discord authentication](#discord-authentication)
-  * [@hizzy/error-overlay](#hizzyerror-overlay)
+  * [hizzy-error-overlay](#hizzy-error-overlay)
 * [🏎️ Blazingly fast and small-sized! 🏎️](#-blazingly-fast-and-small-sized-)
   * [Statistics](#statistics)
 * [JSX Support](#jsx-support)
@@ -66,7 +66,7 @@ To run your app, simply type: `hizzy`!
   * [onClientSideRendered()](#onclientsiderendered)
   * [onClientSideError()](#onclientsideerror)
 * [Why Hizzy?](#why-hizzy)
-* [Project history?](#project-history)
+* [Project history](#project-history)
 <!-- TOC -->
 
 # Production Configuration
@@ -79,7 +79,7 @@ You should turn `dev` off by setting it to `false`.
 
 # Built-in addons
 
-## @hizzy/database
+## hizzy-database
 
 This addon adds these databases:
 
@@ -95,13 +95,13 @@ This addon adds these databases:
 
 ### XML Support
 
-## @hizzy/language
+## hizzy-language
 
 This addon adds language support to your page!
 
 Check the [Language Support Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/language)
 
-## @hizzy/authentication
+## hizzy-authentication
 
 ### Local authentication
 
@@ -111,7 +111,7 @@ Check the [Local Authentication Example on Github](https://github.com/OguzhanUmu
 
 Check the [Discord Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
 
-## @hizzy/error-overlay
+## hizzy-error-overlay
 
 An addon that makes a popup for errors whenever something doesn't work which helps you maintain your project easily!
 
@@ -374,7 +374,7 @@ Hizzy!
 
 People who helped to find the name: mattmatt0990, lebouwski
 
-# Project history?
+# Project history
 
 - Created the project: June 21, 2023
 - First public commit: July 13, 2023

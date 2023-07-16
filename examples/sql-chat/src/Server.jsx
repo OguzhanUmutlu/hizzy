@@ -1,9 +1,13 @@
-const db = new SQLite();
+import Database from "hizzy-database";
+
+const db = new Database.SQLite();
 await db.open();
 await db.exec(`CREATE TABLE IF NOT EXISTS messages
                (
-                   author TEXT,
-                   content TEXT
+                   author
+                   TEXT,
+                   content
+                   TEXT
                )`);
 const addMessage = global.addMessage = async (author, content) => {
     await db.run(`INSERT INTO messages (author, content)

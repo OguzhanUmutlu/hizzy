@@ -9,7 +9,7 @@
   "checkConfig": true,
   "realtime": true,
   "static": {
-    "assets": ".."
+    "assets": ""
   },
   "https": false,
   "srcFolder": "src",

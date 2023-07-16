@@ -92,6 +92,9 @@ declare class APIClass {
     customShortcuts: Record<string, { description: string, run: () => void }>;
     app: Express
     preRequests: Function[];
+    preRawSend: Function[];
+    buildHandlers: Record<string, Function[]>;
+    scanHandlers: Record<string, Record<string, Function[]>>;
 
     constructor(dir: string);
 
@@ -113,7 +116,7 @@ declare class APIClass {
 
     renderHTML(content: string, request: Request, response: Response): void;
 
-    sendRawFile(file: string, content: string, res): void;
+    sendRawFile(file: string, content: string, request: Request, response: Response, force?: boolean): void;
 
     sendFile(file: string, content: string, request: Request, response: Response): void;
 

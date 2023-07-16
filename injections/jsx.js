@@ -44,7 +44,8 @@
     const define = "defineProperty";
     delete w["cookieStore"];
     d.querySelector("script[data-rm='" + R + "']").remove();
-    const key = document.cookie.split(';').find(i => i.trim().startsWith("__hizzy__=")).trim().substring("__hizzy__=".length);
+    const key = (document.cookie.split(';').map(i => i.trim()).find(i => i.startsWith("__hizzy__=")) || "").substring("__hizzy__=".length);
+    if (!key) location.reload();
     const isSecure = location.protocol === "https:";
     const worker = new Worker(URL.createObjectURL(new Blob(["(" + (() => {
         let socket = new WebSocket("$R");
@@ -61,7 +62,7 @@
         .replace("$P", CLIENT2SERVER.KEEPALIVE)
         .replace("$T", TIMEOUT)
     + ")()"])));
-    const sendSocket = content => worker.postMessage(content);
+    const sendToSocket = content => worker.postMessage(content);
     let onRender;
     let renderPromise = new Promise(r => onRender = r);
     let firstRender = true;
@@ -88,10 +89,10 @@
                         const res = runCode(code, [
                             [`__hizzy_run${R}__`, clientFunctions]
                         ]);
-                        sendSocket(CLIENT2SERVER.CLIENT_FUNCTION_RESPONSE + "0" + id + ":" + JSON.stringify(res));
+                        sendToSocket(CLIENT2SERVER.CLIENT_FUNCTION_RESPONSE + "0" + id + ":" + JSON.stringify(res));
                     } catch (e) {
                         console.error(e);
-                        sendSocket(CLIENT2SERVER.CLIENT_FUNCTION_RESPONSE + "1" + id + ":" + e.message);
+                        sendToSocket(CLIENT2SERVER.CLIENT_FUNCTION_RESPONSE + "1" + id + ":" + e.message);
                     }
                 }
                 if (m[0] === SERVER2CLIENT.SERVER_FUNCTION_RESPONSE) {
@@ -117,7 +118,7 @@
     };
     await handshookPromise;
     await loadPromise;
-    sendSocket(CLIENT2SERVER.HANDSHAKE_RESPONSE);
+    sendToSocket(CLIENT2SERVER.HANDSHAKE_RESPONSE);
 
     ///
     let mainFile = mainFileI;
@@ -152,13 +153,14 @@
         if (f === "react") return react;
         if (f === "preact") return react;
         if (f === "hooks") return __hooks;
+        if (addonExports[f]) return {default: addonExports[f]};
         const relativeP = f.startsWith(".");
         const path = pathJoin(f);
         const file = files[path] || files[path + ".jsx"] || files[path + ".tsx"];
         const fName = files[path] ? path : (files[path + ".jsx"] ? path + ".jsx" : path + ".tsx");
         if (hasExported.includes(fName)) return exports[fName];
-        if (!(fName.endsWith(".jsx") || fName.endsWith(".tsx")) && file) {
-            const str = () => file.map(i => String.fromCharCode(i)).join("");
+        if (!fName.endsWith(".jsx") && !fName.endsWith(".tsx") && file) {
+            const str = () => typeof file === "string" ? file : file.map(i => String.fromCharCode(i)).join("");
             if (fName.endsWith(".css")) {
                 const style = document.createElement("style");
                 style.innerHTML = str();
@@ -216,9 +218,10 @@
     for (const f in files) exports[f] = {};
     const runServerFunction = (page, func, args) => {
         const id = ++_evalId;
-        sendSocket(CLIENT2SERVER.SERVER_FUNCTION_REQUEST + "" + id + ":" + page + ":" + func + ":" + JSON.stringify(args));
+        sendToSocket(CLIENT2SERVER.SERVER_FUNCTION_REQUEST + "" + id + ":" + page + ":" + func + ":" + JSON.stringify(args));
         if (files[page].respondFunctions.includes(func)) return new Promise(r => evalResponses[id] = r);
     };
+    // todo: client can create workers, they should be terminated before a navigation, also assignments to `window` or any other global variable stay
     const addonExports = {};
     // BEFORE LOAD:
     const doAddon = async (index, ...a) => {
@@ -226,7 +229,8 @@
             const addon = ADDONS[i];
             const f = addon[index];
             if (!f) continue;
-            const v = await eval(f)(...a);
+            const fn = await eval(f);
+            const v = fn(...a);
             if (index === 1) addonExports[addon[0]] = v;
         }
     };

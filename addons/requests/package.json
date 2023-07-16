@@ -1,0 +1,11 @@
+{
+  "name": "hizzy-requests",
+  "description": "Hizzy's official request management support",
+  "version": "1.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy/tree/main/addons/requests"
+  },
+  "license": "MIT"
+}
