@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-module.exports = {};
+const self = module.exports = {};
 const sT = Date.now();
 global.__sT__ = sT;
 global.__PRODUCT__ = "hizzy";
@@ -68,12 +68,32 @@ const checkDefault = (obj, def = {}, l = []) => {
     return changed;
 };
 const propExpect = (prop, expect, got) => exit("The config file %c" + __PRODUCT__ + ".json%c's %c" + prop + "%c property was expected as: %c" + expect + "%c, got:%c", "color: orange", "color: red", "color: orange", "color: red", "color: orange", "color: red", "color: orange", got);
-const isTerminal = typeof module.parent === "object";
+const isTerminal = require.main === module;
+if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet. Its API can still be reached by importing/requiring '" + __PRODUCT__ + "/api'.");
+// todo
 let dir = process.cwd();
 let file;
 const args = argv.slice(2).filter(i => !i.startsWith("-"));
 const optList = argv.slice(2).filter(i => i.startsWith("-"));
-if (isTerminal && optList.some(i => ["-h", "--help"].includes(i.toLowerCase()))) {
+const _argv_ = {};
+const shortcuts = {
+    "-h": "help",
+    "-v": "version",
+    "-b": "build",
+    "-p": "port",
+    "-d": "dev",
+    "-o": "open",
+    "-c": "config"
+};
+optList.forEach(i => {
+    i = i.toLowerCase();
+    if (shortcuts[i]) i = "--" + shortcuts[i];
+    const sp = i.substring(2).split("=");
+    _argv_[sp[0]] = sp[1] ? sp.slice(1).join("=") || true : true;
+});
+Object.freeze(_argv_);
+self.args = _argv_;
+if (isTerminal && _argv_.help) {
     printer.raw.log("%c  " + __PRODUCT_U__ + " v" + __VERSION__, "color: yellow");
     printer.println("");
     printer.raw.log("%c  Usage: " + __PRODUCT__ + " [root]", "color: magenta");
@@ -81,27 +101,28 @@ if (isTerminal && optList.some(i => ["-h", "--help"].includes(i.toLowerCase())))
     printer.raw.log("%c  Options:", "color: orange");
     printer.raw.log("%c    -h, --help%c               shows this page", "color: green", "color: yellow");
     printer.raw.log("%c    -v, --version%c            shows the version", "color: green", "color: yellow");
-    printer.raw.log("%c    -av, --advanced-version%c  shows advanced information", "color: green", "color: yellow");
+    printer.raw.log("%c    --advanced-version%c       shows advanced information", "color: green", "color: yellow");
     printer.raw.log("%c    -b, --build%c              only builds the project and exits", "color: green", "color: yellow");
     printer.raw.log("%c    --host%c                   sets the hostname", "color: green", "color: yellow");
-    printer.raw.log("%c    --port=PORT%c              sets the port (0 = random)", "color: green", "color: yellow");
-    printer.raw.log("%c    --dev%c                    enables developer mode", "color: green", "color: yellow");
-    printer.raw.log("%c    --open%c                   opens the app on start", "color: green", "color: yellow");
+    printer.raw.log("%c    --config=PATH%c            sets the config file's path", "color: green", "color: yellow");
+    printer.raw.log("%c    -p=PORT, --port=PORT%c     sets the port (0 = random)", "color: green", "color: yellow");
+    printer.raw.log("%c    -d, --dev%c                enables developer mode", "color: green", "color: yellow");
+    printer.raw.log("%c    -o, --open%c               opens the app on start", "color: green", "color: yellow");
     printer.raw.log("%c    --debug%c                  enables debug messages", "color: green", "color: yellow");
     printer.raw.log("%c    --debug-socket%c           sends debug messages of sockets", "color: green", "color: yellow");
     printer.raw.log("%c    --injections%c             builds html/jsx injection files", "color: green", "color: yellow");
     printer.raw.log("%c    --addon-init%c             initializes up an addon environment", "color: green", "color: yellow");
     process.exit();
 }
-if (isTerminal && optList.some(i => ["-v", "--version"].includes(i.toLowerCase()))) {
+if (isTerminal && _argv_.version) {
     printer.raw.log(`${__PRODUCT_U__} v${__VERSION__}`);
     process.exit();
 }
-if (isTerminal && optList.some(i => ["-av", "--advanced-version"].includes(i.toLowerCase()))) {
+if (isTerminal && _argv_["advanced-version"]) {
     printer.raw.log(`${__PRODUCT__}: v${__VERSION__}\nnode: ${process.version}\ndevice: ${os.platform()}-${os.arch()}`);
     process.exit();
 }
-if (isTerminal && optList.some(i => ["--addon-init"].includes(i.toLowerCase()))) {
+if (isTerminal && _argv_["--addon-init"]) {
     const name = args[0];
     if (!name) exit("Usage: npx hizzy --addon-init YourAddonName");
     if (!/^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(name)) exit("Please select a valid addon name!");
@@ -143,8 +164,7 @@ module.exports = class MyAddon extends AddonModule {
     printer.raw.pass("A new addon has been set up at: %c" + name, "color: orange");
     process.exit();
 }
-const isOnlyBuild = optList.some(i => ["-b", "--build"].includes(i.toLowerCase()))
-if (!isOnlyBuild) {
+if (!_argv_.build) {
     printer.clear();
     printer.print("\n");
 }
@@ -156,10 +176,9 @@ if (isTerminal && args[0]) {
         dir = path.dirname(f);
     }
 }
-if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet. Its API can still be reached by importing/requiring '" + __PRODUCT__ + "/api'.");
 
 (async () => {
-    const confPath = path.join(dir, __PRODUCT__ + ".json");
+    const confPath = path.join(dir, _argv_.config ? _argv_.config : __PRODUCT__ + ".json");
     const confExists = fs.existsSync(confPath);
 
     /*async function askLine(
@@ -224,18 +243,18 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
     };
     if (!confExists || !fs.statSync(confPath).isFile()) {
         if (confExists) fs.rmSync(confPath);
-        if (optList.includes("--debug")) printer.dev.debug("Creating the %c/" + __PRODUCT__ + ".json&t file...", "color: orange");
+        if (_argv_.debug) printer.dev.debug("Creating the %c/" + __PRODUCT__ + ".json&t file...", "color: orange");
         fs.writeFileSync(confPath, JSON.stringify(DEFAULT_CONFIG, null, 2));
     }
-    global.conf = {};
+    let conf = {};
     try {
-        global.conf = JSON.parse(fs.readFileSync(confPath, "utf8"));
+        conf = JSON.parse(fs.readFileSync(confPath, "utf8"));
     } catch (e) {
         return exit("Invalid JSON in the file %c'" + confPath + "'%c: %c" + e.toString() + "%c.", "color: orange", "color: red", "color: orange", "color: red");
     }
     const ch = conf.checkConfig;
     const changedKeys = checkDefault(conf, DEFAULT_CONFIG);
-    if (!isOnlyBuild && changedKeys.length && ch) {
+    if (!_argv_.build && changedKeys.length && ch) {
         fs.writeFileSync(confPath, JSON.stringify(conf, null, 2));
         printer.dev.warn("Updated following properties in " + __PRODUCT__ + ".json: " + changedKeys.map(i => i.join("->")).join(", "));
     }
@@ -243,26 +262,7 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
     conf.extensionRemovals = [...new Set(conf.extensionRemovals)];
     if (conf.keepaliveTimeout !== -1 && conf.clientKeepalive >= conf.keepaliveTimeout) return exit("Config's 'clientKeepalive' property has to be smaller than 'keepaliveTimeout'.");
     Object.freeze(conf);
-    global._argv_ = {
-        host: false,
-        port: conf.port,
-        dev: conf.dev,
-        build: conf.autoBuild,
-        "debug-socket": false,
-        debug: false,
-        open: false,
-        "just-build": isOnlyBuild // todo: make conf and _argv_ not-global
-    };
-    Object.keys(_argv_).forEach(i => {
-        if (_argv_[i] === true) return;
-        if (typeof _argv_[i] === "boolean") {
-            if (optList.some(j => j === "--" + i)) return _argv_[i] = true;
-        } else {
-            const c = optList.find(j => j.startsWith("--" + i + "="));
-            if (c) _argv_[i] = c.split("=").slice(1).join("=");
-        }
-    });
-    Object.freeze(_argv_);
+    self.config = conf;
     if (!_argv_.debug) {
         printer.options.disabledTags.push("debug");
         printer.dev.options.disabledTags.push("debug");
@@ -278,7 +278,10 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
             fs.writeFileSync(path.join(srcPath, "App.jsx"), `const foo = 20;\nexport default <div>Hello, world! { foo * 2 }</div>`);
         } else printer.dev.debug("Skipping the creation of %c/" + conf.srcFolder + "&t because there is an existing build.", "color: orange");
     }
-    global[__PRODUCT_U__] = new (require(path.join(__dirname, "api.min.js")))(dir);
+    self.config = conf;
+    const apiPath = path.join(__dirname, "api.js");
+    const apiMinPath = path.join(__dirname, "api.min.js");
+    global[__PRODUCT_U__] = new (require(fs.existsSync(apiPath) ? apiPath : apiMinPath))(dir);
     const mainPath = path.join(dir, conf.srcFolder, conf.main);
     const mainExtension = path.extname(mainPath);
     if (!fs.existsSync(mainPath)) {
@@ -289,7 +292,7 @@ if (!isTerminal) exit(__PRODUCT_U__ + "'s module mode has not been developed yet
 </Routes>;`
         }[mainExtension]);
     }
-    if (isOnlyBuild) {
+    if (_argv_.build) {
         _argv_["just-build"] = true;
         Hizzy.build().then(() => process.exit());
     } else {

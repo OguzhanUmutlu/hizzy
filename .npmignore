@@ -9,6 +9,9 @@ examples
 .npmignore
 pb.js
 
+injections/jsx.js
+injections/html.js
+
 api.js
 hizzy.js
 addons

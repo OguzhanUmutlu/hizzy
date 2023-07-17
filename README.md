@@ -50,18 +50,6 @@ To run your app, simply type: `hizzy`!
 * [CLI](#cli)
   * [Providing the cd](#providing-the-cd)
     * [Example:](#example)
-  * [Other options](#other-options)
-    * [-h or --help](#-h-or---help)
-    * [-v or --version](#-v-or---version)
-    * [-av or --advanced-version](#-av-or---advanced-version)
-    * [-b or --build](#-b-or---build)
-    * [--host](#--host)
-    * [--port=PORT](#--portport)
-    * [--dev](#--dev)
-    * [--auto-build](#--auto-build)
-    * [--debug](#--debug)
-    * [--debug-socket](#--debug-socket)
-    * [--experimental](#--experimental)
 * [Addon API](#addon-api)
   * [onLoad()](#onload)
   * [onEnable()](#onenable)
@@ -284,77 +272,6 @@ npx hizzy [root]
 ```
 npx hizzy ./myDirectory/myProject
 ```
-
-## Other options
-
-### -h or --help
-
-Shows a list of options and usages.
-
-Doesn't run anything related to project.
-
-### -v or --version
-
-Shows the version of the hizzy.
-
-Doesn't run anything related to project.
-
-### -av or --advanced-version
-
-Shows an advanced list of versions you might need for creating an [Issue](https://github.com/OguzhanUmutlu/Hizzy/issues)
-on Hizzy.
-
-Sends the version of:
-
-- Hizzy
-- Node
-- Device
-
-Doesn't run anything related to project.
-
-### -b or --build
-
-Builds the project.
-
-Doesn't; scan the build, listen the server or run the main file.
-
-### --host
-
-Exposes the IPv4 address in the start screen. (or `u` shortcut)
-
-### --port=PORT
-
-Sets the port.
-
-If the port is 0, it will pick a random open port.
-
-### --dev
-
-Enables developer mode. (Can be set to `"dev": true` in the `hizzy.json`)
-
-### --auto-build
-
-Builds even if `autoBuild` is set to `false` in the `hizzy.json`.
-
-### --debug
-
-Sends the debug messages. (Can be set to `"debug": true` in the `hizzy.json`)
-
-### --debug-socket
-
-Shows the packets sent to sockets in the terminal. Requires the `debug` mode to be on.
-
-### --experimental
-
-This minifies the following files in the source files of Hizzy:
-
-- /injections/html.js
-- /injections/jsx.js
-
-Which prevents unnecessary building for some files.
-
-Enabling this won't break anything, it will only slow down the initial time approximately 200ms depending on your
-device.
 
 # Addon API
 

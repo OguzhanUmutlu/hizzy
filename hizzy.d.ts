@@ -39,6 +39,11 @@ export function useAddon(name: string): any;
 
 export function useEffect(effect: () => any | (() => any), inputs?: Inputs): void;
 
+/** @internal */
+export const config: Record<string, string>;
+/** @internal */
+export const args: Record<string, string | boolean>;
+
 export {
     useCallback,
     useContext,

@@ -14,6 +14,7 @@ const open = require("open");
 const babel = require("@babel/core");
 const babelParser = require("@babel/parser");
 const traverse = require("@babel/traverse").default;
+const printer = require("fancy-printer");
 const minify = {
     js: (...r) => require("uglify-js").minify(...r).code,
     css: (...r) => require("csso").minify(...r).css,
@@ -38,6 +39,12 @@ process.on("uncaughtException", error => {
     printer.dev.error(error);
     process.exit(1);
 });
+const isTerminal = require.main.filename === path.join(__dirname, "hizzy.js") || require.main.filename === path.join(__dirname, "hizzy.min.js");
+let hizzy = {};
+const hizzyPath = path.join(__dirname, "hizzy.js");
+const hizzyMinPath = path.join(__dirname, "hizzy.min.js");
+if (isTerminal) hizzy = require(fs.existsSync(hizzyPath) ? hizzyPath : hizzyMinPath);
+const {args: arguments, config} = hizzy;
 
 // todo: maybe split static into two, static and dynamic. static = cached, dynamic = not cached
 // todo: use esbuild
@@ -127,7 +134,7 @@ const jsOpt = {
 const HIZZY_EXPERIMENTAL = process.argv.includes("--injections");
 let experimentalId = Date.now().toString(36);
 let jsxInjection, htmlInjection, preactCode, preactHooksCode;
-if (HIZZY_EXPERIMENTAL) {
+const generateInjections = () => {
     const t = Date.now();
     jsxInjection = minify.js(fs.readFileSync(path.join(__dirname, "injections/jsx.js"), "utf8"), jsOpt);
     fs.writeFileSync(path.join(__dirname, "injections/jsx.min.js"), jsxInjection);
@@ -148,7 +155,9 @@ if (HIZZY_EXPERIMENTAL) {
         const sT = Date.now() - t;
         printer.dev.pass("Injections have been minified. (%c" + timeForm(sT) + "&t)", "color: orange");
     })();
-} else {
+};
+if (HIZZY_EXPERIMENTAL) generateInjections();
+else {
     jsxInjection = fs.readFileSync(path.join(__dirname, "injections/jsx.min.js"), "utf8");
     htmlInjection = fs.readFileSync(path.join(__dirname, "injections/html.min.js"), "utf8");
     preactCode = fs.readFileSync(path.join(__dirname, "injections/preact.min.js"), "utf8");
@@ -162,6 +171,9 @@ for (const interfaceName in interfaces) {
     const iface = interfaces[interfaceName];
     for (const alias of iface) if (alias.family === "IPv4" && !alias.internal) addresses.push(alias.address);
 }
+const ideaCmd = {win32: "idea64.exe", darwin: "idea"}[os.platform()] || "idea.sh";
+const phpStormCmd = {win32: "phpstorm64.exe", darwin: "phpstorm"}[os.platform()] || "phpstorm.sh";
+const webStormCmd = {win32: "webstorm.exe", darwin: "webstorm"}[os.platform()] || "webstorm.sh";
 
 class Client {
     static clients = {};
@@ -327,7 +339,7 @@ class API extends EventEmitter {
     #jsxCache = {};
     #jsxFunctions = {};
     #port = -1;
-    #https = conf.https;
+    #https = config.https;
     #serverAddress;
     #evalId = 0;
     #evalResponses = {};
@@ -345,6 +357,7 @@ class API extends EventEmitter {
     #firstBuild = true;
     #firstScan = true;
     #addonCache = null;
+    #globalStates = new Map;
     server;
     socketServer;
     autoRefresh = false;
@@ -422,8 +435,8 @@ class API extends EventEmitter {
             };
             await r(0);
         });
-        if (this.dev && !fs.existsSync(path.join(this.#dir, conf.srcFolder))) {
-            printer.dev.warn("No %c/" + conf.srcFolder + "&t found. Forcing to disable the developer mode.", "color: orange");
+        if (this.dev && !fs.existsSync(path.join(this.#dir, config.srcFolder))) {
+            printer.dev.warn("No %c/" + config.srcFolder + "&t found. Forcing to disable the developer mode.", "color: orange");
             this.dev = false;
         }
         this.buildHandlers.jsx = [async (file, get, set, zip, ext, pt) => {
@@ -482,9 +495,9 @@ class API extends EventEmitter {
         req._uuid = res._uuid = crypto.randomUUID();
         this.#webUUIDs[req._uuid] = req._Route;
         res.cookie(ck, res._uuid);
-        if (conf.connectionTimeout > 0 && this.#realtime) this.#uuidTimeout[req._uuid] = setTimeout(() => {
+        if (config.connectionTimeout > 0 && this.#realtime) this.#uuidTimeout[req._uuid] = setTimeout(() => {
             delete this.#webUUIDs[req._uuid];
-        }, conf.connectionTimeout);
+        }, config.connectionTimeout);
     };
 
     random() {
@@ -514,7 +527,7 @@ class API extends EventEmitter {
             delete this.#clientPages[uuid];
             const client = new Client(socket);
             socket._send = s => {
-                if (_argv_["debug-socket"]) printer.dev.debug("> " + s);
+                if (arguments["debug-socket"]) printer.dev.debug("> " + s);
                 if (!socket._closed) socket.send(s);
             };
             clearTimeout(this.#uuidTimeout[uuid]);
@@ -542,14 +555,14 @@ class API extends EventEmitter {
             let keepalive;
             let keepaliveStart;
             const ka = () => {
-                if (conf.keepaliveTimeout < 0 || !(socket._URL_.endsWith(".jsx") || socket._URL_.endsWith(".tsx"))) return;
-                if (!keepaliveStart || keepaliveStart + conf.minClientKeepalive < Date.now()) {
+                if (config.keepaliveTimeout < 0 || !(socket._URL_.endsWith(".jsx") || socket._URL_.endsWith(".tsx"))) return;
+                if (!keepaliveStart || keepaliveStart + config.minClientKeepalive < Date.now()) {
                     clearTimeout(keepalive);
                     keepaliveStart = Date.now();
-                    keepalive = setTimeout(() => close("couldn't stay alive"), conf.keepaliveTimeout);
+                    keepalive = setTimeout(() => close("couldn't stay alive"), config.keepaliveTimeout);
                 }
             };
-            const timeout = conf.connectionTimeout > 0 ? setTimeout(_ => close("timeout"), conf.connectionTimeout) : null;
+            const timeout = config.connectionTimeout > 0 ? setTimeout(_ => close("timeout"), config.connectionTimeout) : null;
             if (!uuid || this.#clients[uuid] || !(uuid in this.#webUUIDs)) return close("invalid key");
             this.#clients[uuid] = socket;
             delete this.#webUUIDs[uuid];
@@ -590,7 +603,7 @@ class API extends EventEmitter {
                 try {
                     data = data.toString();
                     if (socket._closed) return;
-                    if (_argv_["debug-socket"]) printer.dev.debug("< " + data);
+                    if (arguments["debug-socket"]) printer.dev.debug("< " + data);
                     if (data[0] === CLIENT2SERVER.HANDSHAKE_RESPONSE) { // handshake finished
                         if (socket._handshook) return close("one handshake is enough");
                         socket._handshook = true;
@@ -711,7 +724,7 @@ class API extends EventEmitter {
                 if (this.dev) {
                     ls = [];
                     const d = h => {
-                        const p = path.join(this.#dir, conf.srcFolder, h);
+                        const p = path.join(this.#dir, config.srcFolder, h);
                         const fl = fs.readdirSync(p);
                         for (const i of fl) {
                             const fl = path.join(p, i);
@@ -728,7 +741,7 @@ class API extends EventEmitter {
         }
         for (const f of ls) {
             let c;
-            if (this.dev) c = this.cacheDevFile(path.join(this.#dir, conf.srcFolder, f));
+            if (this.dev) c = this.cacheDevFile(path.join(this.#dir, config.srcFolder, f));
             else c = await this.cacheBuildFile(f);
             if (!c) c = "";
             if (f.endsWith(".jsx") || f.endsWith(".tsx")) await this.#builtJSX(f, c, req, res, files, pk);
@@ -749,7 +762,7 @@ class API extends EventEmitter {
         if (res.headersSent) return;
         this.prepLoad(req, res);
         const r = this.random();
-        if (!this.#realtime) return res.json({error: "Expected 'realtime' option in the 'hizzy.json' to be true."});
+        if (!this.#realtime) return res.json({error: "Expected 'realtime' option in the Hizzy configuration file to be true."});
         if (fromScript) {
             const cPages = await this.#getPagePacket(file, code, req, res);
             req.__socket._externalLoad(file, this.#clientPages[req._uuid]);
@@ -761,7 +774,7 @@ class API extends EventEmitter {
             .replace("$$R$$", r)
             .replace("$$R$$", r) // it's important that it's ran exactly 2 times!
             .replace("$$CONF$$", "['" + r + "','" + (this.#buildRuntimeId || runtimeId) + "'," + this.#builtAt + "," +
-                (conf.keepaliveTimeout > 0 ? conf.clientKeepalive : -1) + "," + req._RouteJSON + "," +
+                (config.keepaliveTimeout > 0 ? config.clientKeepalive : -1) + "," + req._RouteJSON + "," +
                 await this.#getPagePacket(file, code, req, res) + "," + (this.dev ? 1 : 0) + ",'" + experimentalId + "']"
             )
         }</script>`, req, res);
@@ -795,7 +808,7 @@ class API extends EventEmitter {
         this.#watchFile(req._Route);
         await this.sendRawFile(".html", content + (this.#realtime ? `<script data-rm=${r}>` + htmlInjection
             .replace("$R", r)
-            .replace("$T", conf.keepaliveTimeout > 0 ? conf.clientKeepalive : -1) + `</script>` : ""), req, res
+            .replace("$T", config.keepaliveTimeout > 0 ? config.clientKeepalive : -1) + `</script>` : ""), req, res
         );
     };
 
@@ -803,7 +816,7 @@ class API extends EventEmitter {
         if (!this.dev || this.#watchingFiles[file] || !this.autoRefresh) return;
         if (!file.endsWith(".html") && !file.endsWith(".jsx") && !file.endsWith(".tsx")) return; // todo: maybe if one updates, update everything related
         this.#watchingFiles[file] = true;
-        fs.watchFile(path.join(this.#dir, conf.srcFolder, file), {interval: 1}, () => {
+        fs.watchFile(path.join(this.#dir, config.srcFolder, file), {interval: 1}, () => {
             for (const uuid in this.#clients) {
                 const client = this.#clients[uuid];
                 if (client._URL_ !== file) return;
@@ -839,10 +852,10 @@ class API extends EventEmitter {
     };
 
     #staticRender(req, res) {
-        if (Object.keys(conf.static).length === 0) return this.notFound(req, res);
+        if (Object.keys(config.static).length === 0) return this.notFound(req, res);
         const l = req.url.substring(1).split("?")[0];
-        for (const folder in conf.static) {
-            const p = path.join(this.#dir, folder, conf.static[folder], l);
+        for (const folder in config.static) {
+            const p = path.join(this.#dir, folder, config.static[folder], l);
             if (fs.existsSync(p) && fs.statSync(p).isFile()) return this.sendFile(l, fs.readFileSync(p), req, res, false);
         }
         return this.notFound(req, res);
@@ -853,7 +866,7 @@ class API extends EventEmitter {
     };
 
     #devRender(l, req, res) {
-        const p = path.join(this.#dir, conf.srcFolder, l);
+        const p = path.join(this.#dir, config.srcFolder, l);
         if (!fs.existsSync(p)) return this.#staticRender(req, res);
         const content = this.cacheDevFile(p);
         if (!content) return this.#invalidFile(res, l);
@@ -874,7 +887,7 @@ class API extends EventEmitter {
     #sendURLs() {
         const {address, family} = this.#serverAddress;
         printer.raw.log(`  %c➜%c  Local:   %c${this.#formatLocalURL(family === "IPv6" ? "localhost" : address)}`, "color: greenBright", "", "color: cyan");
-        if (_argv_.host) printer.raw.log(`  %c➜%c  Network: %c` + addresses.map(i => this.#formatLocalURL(i)).join(", "), "color: greenBright", "", "color: cyan");
+        if (arguments.host) printer.raw.log(`  %c➜%c  Network: %c` + addresses.map(i => this.#formatLocalURL(i)).join(", "), "color: greenBright", "", "color: cyan");
         else printer.raw.log(`  %c➜  Network: use %c--host%c to expose`, "color: gray", "", "color: gray");
     };
 
@@ -883,13 +896,25 @@ class API extends EventEmitter {
     };
 
     async #hasVSC() {
-        return await new Promise(r => exec("code --version", err => r(!err)));
+        return await new Promise(r => exec("where code", err => r(!err)));
+    };
+
+    async #hasIdea() {
+        return await new Promise(r => exec("where " + ideaCmd, err => r(!err)));
+    };
+
+    async #hasPhpStorm() {
+        return await new Promise(r => exec("where " + phpStormCmd, err => r(!err)));
+    };
+
+    async #hasWebStorm() {
+        return await new Promise(r => exec("where " + webStormCmd, err => r(!err)));
     };
 
     async listen() {
         if (this.#listening) await new Promise(r => this.server.close(r));
         this.#listening = false;
-        let port_ = _argv_.port * 1;
+        let port_ = (arguments.port || config.port) * 1;
         if (port_ < 0) port_ = 0;
         this.#port = port_;
         await new Promise(r => this.server.listen(port_, () => r(true)));
@@ -924,18 +949,15 @@ class API extends EventEmitter {
         printer.println("");
         printer.inline.log(`  %c➜%c  Mode:    %c${this.dev ? "Development" : "Production"}`, "color: greenBright", "", "color: " + (this.dev ? "orange" : "green"));
         if (port_ <= 0) printer.inline.log("%c, randomized port", "color: gray");
-        if (_argv_.debug) printer.inline.log("%c, debugging", "color: gray");
+        if (arguments.debug) printer.inline.log("%c, debugging", "color: gray");
         printer.inline.print("\n");
         this.#sendURLs();
         printer.raw.log(`  %c➜%c  press %ch%c to show help\n`, "color: gray", "color: gray", "color: whiteBright", "color: gray");
         stdin.setRawMode(true);
         stdin.resume();
-        let lastCmd = null;
-        let vscProm = null;
-        const hasVSC = await this.#hasVSC();
         const shortcuts = {
             h: {
-                description: "show this menu", enabled: true, noRepeat: true,
+                description: "show this menu", enabled: true, cooldown: 1000,
                 run: () => {
                     printer.raw.println("");
                     printer.raw.log("  Shortcuts");
@@ -967,7 +989,7 @@ class API extends EventEmitter {
                 run: async () => await this.scanBuild()
             },
             u: {
-                description: "show server url", enabled: true, noRepeat: true,
+                description: "show server url", enabled: true, cooldown: 1000,
                 run: () => {
                     printer.raw.println("");
                     this.#sendURLs();
@@ -975,21 +997,12 @@ class API extends EventEmitter {
                 }
             },
             o: {
-                description: "open in browser", enabled: true, noRepeat: true,
+                description: "open in browser", enabled: true, cooldown: 1000,
                 run: () => this.openInBrowser()
             },
             c: {
                 description: "clear the console", enabled: true,
                 run: () => printer.clear()
-            },
-            v: {
-                description: "open VS Code in here", enabled: hasVSC, noRepeat: true,
-                run: async () => {
-                    vscProm = new Promise(r => exec("code \"" + this.#dir + "\"", r));
-                    const res = await vscProm;
-                    if (!res) printer.raw.log("%c  ✓  Opened VS Code!", "color: green");
-                    else printer.raw.log("%c  ✕  Failed to open VS Code.", "color: red");
-                }
             },
             a: {
                 description: "re-enable all addons", enabled: true,
@@ -1010,8 +1023,40 @@ class API extends EventEmitter {
             },
             ...this.customShortcuts
         };
+        Promise.all([this.#hasVSC(), this.#hasIdea(), this.#hasPhpStorm(), this.#hasWebStorm()]).then(r => {
+            const editors = [];
+            r.forEach((i, j) => i && editors.push({
+                name: ["Visual Studio Code", "Intellij Idea", "Php Storm", "Web Storm"][j],
+                command: ["code", ideaCmd, phpStormCmd, webStormCmd][j]
+            }));
+            if (editors.length) shortcuts.e = {
+                description: "open VS Code in here", enabled: true, cooldown: 1000,
+                run: async () => {
+                    printer.raw.print(printer.substitute("%c  ✓  Select an editor: ", "color: gray"));
+                    stdin.off("data", handler);
+                    const r = await printer.readSelectionListed(["Cancel", ...editors.map(i => i.name)], {
+                        betweenText: " / ",
+                        normalColor: "yellow",
+                        selectedColor: "green",
+                        selectedBackgroundColor: "",
+                        selectedUnderline: true
+                    });
+                    stdin.setRawMode(true);
+                    stdin.resume();
+                    stdin.on("data", handler);
+                    if (r === 0) return;
+                    const editor = editors[r - 1];
+                    printer.raw.log("%c  ✓  Opening " + editor.name + "...", "color: yellow");
+                    await new Promise(r => exec(`${editor.command} ${JSON.stringify(this.#dir)}`, r));
+                    printer.raw.log("%c  ✓  Opened " + editor.name + "!", "color: green");
+                    // printer.raw.log("%c  ✕  Failed to open " + editor.name + ".", "color: red");
+                }
+            };
+        });
         let cmdPromise = null;
-        stdin.on("data", async c => {
+        let cmdCooldown = {};
+        let handler;
+        stdin.on("data", handler = async c => {
             c = c.toString();
             if (c === "\x0c") return printer.clear();
             if (c === "\x03") {
@@ -1019,22 +1064,20 @@ class API extends EventEmitter {
                 process.exit();
             }
             const shortcut = shortcuts[c];
-            if (!shortcut || (shortcut.noRepeat && lastCmd === c)) return;
-            lastCmd = c;
+            if (!shortcut || (cmdCooldown[c] || 0) + (shortcut.cooldown || 0) > Date.now()) return;
             await this.waitBuild();
             await this.waitBuildScanning();
-            await vscProm;
             await cmdPromise;
-            let onEnd;
-            cmdPromise = new Promise(r => onEnd = r);
-            await shortcut.run();
-            onEnd();
+            cmdPromise = (async () => {
+                await shortcut.run();
+                cmdCooldown[c] = Date.now();
+            })();
         });
-        if (_argv_.open) this.openInBrowser();
+        if (arguments.open) this.openInBrowser();
     };
 
     async #buildInternal(to, dat = [0], zip) {
-        const srcPath = path.join(this.#dir, conf.srcFolder);
+        const srcPath = path.join(this.#dir, config.srcFolder);
         for (const file of fs.readdirSync(path.join(srcPath, ...to))) {
             const p = path.join(srcPath, ...to, file);
             if (!fs.existsSync(p)) continue;
@@ -1057,7 +1100,7 @@ class API extends EventEmitter {
                 e = true;
             }
             zip.file("source/" + to.map(i => i + "/").join("") + file, content);
-            if (conf.includeOriginalInBuild) zip.file("original/" + to.join("/"), actualContent);
+            if (config.includeOriginalInBuild) zip.file("original/" + to.join("/"), actualContent);
             if (!e) printer.dev.debug("Built " + path.join(...to, file));
         }
     };
@@ -1068,7 +1111,7 @@ class API extends EventEmitter {
         this.#isBuilding = true;
         let onEnd;
         this.#buildPromise = new Promise(r => onEnd = r);
-        if (fs.existsSync(path.join(this.#dir, conf.srcFolder))) {
+        if (fs.existsSync(path.join(this.#dir, config.srcFolder))) {
             const d = Date.now();
             let dat = [0];
             const zip = new (require("jszip"))();
@@ -1111,13 +1154,13 @@ class API extends EventEmitter {
             }*/
             zip.file("time", Date.now() + "");
             zip.file("runtime", runtimeId + "");
-            const mainPath = path.join(this.#dir, conf.srcFolder, conf.main);
-            const code = this.jsxToJS(fs.readFileSync(mainPath), path.extname(conf.main));
+            const mainPath = path.join(this.#dir, config.srcFolder, config.main);
+            const code = this.jsxToJS(fs.readFileSync(mainPath), path.extname(config.main));
             if (code instanceof Error) return exit("Couldn't build the main file!", code);
             zip.file("main", code);
             if (this.#firstBuild) {
                 this.#firstBuild = false;
-                const mainPath = path.join(this.#dir, conf.srcFolder, conf.main);
+                const mainPath = path.join(this.#dir, config.srcFolder, config.main);
                 const mainExtension = path.extname(mainPath);
                 const mainExtensions = [".jsx", ".tsx"];
                 if (!mainExtensions.includes(mainExtension)) return exit("Invalid file extension for the main file: " + mainExtension + ", expected: " + mainExtensions.join(" or "));
@@ -1127,15 +1170,15 @@ class API extends EventEmitter {
             const dt = Date.now() - d;
             if (dat[0] === 0) printer.dev.pass("Built. (%c" + timeForm(dt) + "&t)", "color: orange");
             else printer.dev.fail("Built with %c" + dat[0] + "&t error" + (dat[0] > 1 ? "s" : "") + ". (%c" + timeForm(dt) + "&t)", "color: blue", "color: blue");
-        } else printer.dev.warn("Skipping building since there is no %c/" + conf.srcFolder + "&t folder...", "color: orange");
+        } else printer.dev.warn("Skipping building since there is no %c/" + config.srcFolder + "&t folder...", "color: orange");
         this.#isBuilding = false;
         onEnd();
-        if (!this.#buildCache && !_argv_["just-build"]) await this.scanBuild();
+        if (!this.#buildCache && !arguments.build) await this.scanBuild();
     };
 
     async scanBuild() {
         if (this.dev) {
-            if (!this.#listening && conf.listen) await this.listen();
+            if (!this.#listening && config.listen) await this.listen();
             return;
         }
         if (this.#isBuilding) await this.waitBuild();
@@ -1157,15 +1200,15 @@ class API extends EventEmitter {
         //let tmpDate = Date.now() + "";
         //fs.mkdirSync(path.join(tmpdir, tmpDate));
         //fs.writeFileSync(path.join(tmpdir, tmpDate, "package.json"), `{"type":"module"}`);
-        //const isExtracting = conf.extractBuild && !fs.existsSync(path.join(this.#dir, conf.srcFolder));
-        //if (isExtracting) fs.mkdirSync(path.join(this.#dir, conf.srcFolder));
+        //const isExtracting = config.extractBuild && !fs.existsSync(path.join(this.#dir, config.srcFolder));
+        //if (isExtracting) fs.mkdirSync(path.join(this.#dir, config.srcFolder));
         let builtAt;
         let buildRuntimeId;
         let mainCode;
         for (const file in zip.files) {
             const dat = zip.files[file];
             if (dat.dir) {
-                //if (isExtracting) fs.mkdirSync(path.join(this.#dir, conf.srcFolder, file));
+                //if (isExtracting) fs.mkdirSync(path.join(this.#dir, config.srcFolder, file));
                 //fs.mkdirSync(path.join(tmpdir, tmpDate, file), {recursive: true});
                 continue;
             }
@@ -1184,7 +1227,7 @@ class API extends EventEmitter {
                 mainCode = data;
                 continue;
             }
-            //if (isExtracting) fs.writeFileSync(path.join(this.#dir, conf.srcFolder, file), data);
+            //if (isExtracting) fs.writeFileSync(path.join(this.#dir, config.srcFolder, file), data);
             const folder = file.split("/")[0];
             const handler = this.scanHandlers[folder];
             if (handler) {
@@ -1206,7 +1249,7 @@ class API extends EventEmitter {
         this.#buildRuntimeId = buildRuntimeId;
         if (mainCode) await this.processMain(mainCode);
         onEnd();
-        if (!this.#listening && conf.listen && !_argv_["just-build"]) await this.listen();
+        if (!this.#listening && config.listen && !arguments.build) await this.listen();
     };
 
     async #pseudoBuildJSX(file, code, json, inits) {
@@ -1252,8 +1295,8 @@ class API extends EventEmitter {
         Hizzy.Routes = global.Routes = () => React("div", null);
         Hizzy.Route = global.Route = () => React("div", null);
         let mainResponse;
-        const tDir = path.dirname(path.join(this.#dir, conf.srcFolder, conf.main));
-        const tPath = path.join(tDir, "t" + random() + "--" + path.basename(conf.main) + "--.js");
+        const tDir = path.dirname(path.join(this.#dir, config.srcFolder, config.main));
+        const tPath = path.join(tDir, "t" + random() + "--" + path.basename(config.main) + "--.js");
         const tPkgPath = path.join(tDir, "package.json");
         let pkgN;
         const rmf = () => {
@@ -1266,15 +1309,15 @@ class API extends EventEmitter {
         try {
             if (fs.existsSync(tPkgPath)) {
                 const p = JSON.parse(pkgN = fs.readFileSync(tPkgPath, "utf8"));
-                if ((p.type === "module") !== conf.mainModule) {
-                    if (conf.mainModule) p.type = "module";
+                if ((p.type === "module") !== config.mainModule) {
+                    if (config.mainModule) p.type = "module";
                     else delete p.type;
                     fs.writeFileSync(tPkgPath, JSON.stringify(p));
                 } else pkgN = false;
-            } else fs.writeFileSync(tPkgPath, conf.mainModule ? `{"type":"module"}` : "{}")
+            } else fs.writeFileSync(tPkgPath, config.mainModule ? `{"type":"module"}` : "{}")
             fs.writeFileSync(tPath, data);
             mainResponse = await import(url.pathToFileURL(tPath));
-            // if(conf.mainModule) mainResponse = await import("data:application/javascript;base64," + Buffer.from(data.toString()).toString("base64"));
+            // if(config.mainModule) mainResponse = await import("data:application/javascript;base64," + Buffer.from(data.toString()).toString("base64"));
             // else Function(data.toString())();
         } catch (e) {
             rmf();
@@ -1354,7 +1397,7 @@ class API extends EventEmitter {
     };
 
     async readClientJSX(file, jsxCode) {
-        if (file === conf.main) return {
+        if (file === config.main) return {
             code: `throw "Cannot access the main file.";`,
             serverFunctions: {},
             clientFunctionList: [],
@@ -1625,6 +1668,18 @@ class API extends EventEmitter {
     getCookie(cookies, cookie) {
         const c = (cookies || "").split(";").map(i => i.trim()).find(i => i.startsWith(cookie + "="));
         return c ? c.substring(cookie.length + 1) : null;
+    };
+
+    useGlobalState(key, defaultValue) {
+        if (!key) key = "";
+        if (!this.#globalStates.has(key)) this.#globalStates.set(key, defaultValue);
+        const get = () => this.#globalStates.get(key);
+        const set = v => {
+            if (typeof v === "function") v = v(get());
+            this.#globalStates.set(key, v);
+        };
+        const delete_ = () => this.#globalStates.delete(key);
+        return {get, set, delete: delete_};
     };
 }
 

@@ -53,7 +53,6 @@ module.exports = class ImagePlusAddon extends AddonModule {
                     const k = file + "\x00" + w + "\x00" + h;
                     const buff = this.#blurCache[k] = this.#blurCache[k] || await resizeImage(file, content, w, h);
                     if (!buff) return;
-                    console.log(1)
                     Hizzy.sendRawFile(file, buff, req, res, true);
                 } catch (e) {
                     console.log(e)

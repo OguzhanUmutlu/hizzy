@@ -20,6 +20,13 @@ type RouteComponent = (props: {
     onRequest?: onRequestFunction<Promise<void>> | onRequestFunction<void | Promise<void>>[]
 }) => VNode<RouteComponent> | void;
 
+type Shortcut = {
+    description: string
+    enabled: boolean
+    cooldown?: number
+    run: () => void
+};
+
 declare class AddonModule {
     get name(): string;
 
@@ -89,7 +96,7 @@ declare class APIClass {
     autoRefresh: boolean;
     dev: boolean;
     routes: Record<string, string>;
-    customShortcuts: Record<string, { description: string, run: () => void }>;
+    customShortcuts: Record<string, Shortcut>;
     app: Express
     preRequests: Function[];
     preRawSend: Function[];
@@ -163,6 +170,12 @@ declare class APIClass {
     processMain(code: string | Buffer): Promise<void>;
 
     getCookie(cookies: string, cookie: string): string | null;
+
+    useGlobalState<T>(key?: any, default_?: T): {
+        get: () => T
+        set: (value: T | ((current: T) => T)) => T
+        delete: () => void
+    };
 }
 
 declare global {

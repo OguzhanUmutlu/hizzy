@@ -3,13 +3,13 @@ import "./App.css";
 
 // @server
 function addClick() {
-    if (!global.count) global.count = 0; // If there is no 'count' variable, create it!
-    global.count++;
+    const {set} = Hizzy.useGlobalState(null, 0);
+    set(v => v + 1);
 }
 
 // @server/respond
 function getClicks() {
-    return global.count || 0;
+    return Hizzy.useGlobalState(null, 0).get();
 }
 
 function Main() {
@@ -23,7 +23,8 @@ function Main() {
     }
 
     return <div className="container">
-        <a target="_blank"><img src="/assets/hizzy.png" className="logo" alt="Hizzy Logo" draggable={false}/></a>
+        <a href="https://hizzyjs.github.io/" target="_blank"><img src="../assets/hizzy.svg" className="logo"
+                                                                  alt="Hizzy Logo" draggable={false}/></a>
         <h1>Hizzy</h1>
         <button onClick={onClick} onContextMenu={onClick}>count is {count}</button>
         <p>Edit <code>src/App.jsx</code> and save to test HMR</p>
