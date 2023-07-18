@@ -83,7 +83,8 @@ const shortcuts = {
     "-p": "port",
     "-d": "dev",
     "-o": "open",
-    "-c": "config"
+    "-c": "config",
+    "-f": "force"
 };
 optList.forEach(i => {
     i = i.toLowerCase();
@@ -106,12 +107,14 @@ if (isTerminal && _argv_.help) {
     printer.raw.log("%c    --host%c                   sets the hostname", "color: green", "color: yellow");
     printer.raw.log("%c    --config=PATH%c            sets the config file's path", "color: green", "color: yellow");
     printer.raw.log("%c    -p=PORT, --port=PORT%c     sets the port (0 = random)", "color: green", "color: yellow");
+    printer.raw.log("%c    -f, --force%c              forces auto build", "color: green", "color: yellow");
     printer.raw.log("%c    -d, --dev%c                enables developer mode", "color: green", "color: yellow");
     printer.raw.log("%c    -o, --open%c               opens the app on start", "color: green", "color: yellow");
     printer.raw.log("%c    --debug%c                  enables debug messages", "color: green", "color: yellow");
     printer.raw.log("%c    --debug-socket%c           sends debug messages of sockets", "color: green", "color: yellow");
     printer.raw.log("%c    --injections%c             builds html/jsx injection files", "color: green", "color: yellow");
     printer.raw.log("%c    --addon-init%c             initializes up an addon environment", "color: green", "color: yellow");
+    printer.raw.log("%c    --no-clear%c               disables the initial screen clear", "color: green", "color: yellow");
     process.exit();
 }
 if (isTerminal && _argv_.version) {
@@ -122,7 +125,7 @@ if (isTerminal && _argv_["advanced-version"]) {
     printer.raw.log(`${__PRODUCT__}: v${__VERSION__}\nnode: ${process.version}\ndevice: ${os.platform()}-${os.arch()}`);
     process.exit();
 }
-if (isTerminal && _argv_["--addon-init"]) {
+if (isTerminal && _argv_["addon-init"]) {
     const name = args[0];
     if (!name) exit("Usage: npx hizzy --addon-init YourAddonName");
     if (!/^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(name)) exit("Please select a valid addon name!");
@@ -164,7 +167,7 @@ module.exports = class MyAddon extends AddonModule {
     printer.raw.pass("A new addon has been set up at: %c" + name, "color: orange");
     process.exit();
 }
-if (!_argv_.build) {
+if (!_argv_.build && !_argv_["no-clear"]) {
     printer.clear();
     printer.print("\n");
 }
@@ -329,7 +332,7 @@ if (isTerminal && args[0]) {
         if (Hizzy.dev) {
             if (conf.listen) Hizzy.listen().then(r => r);
         } else {
-            if (_argv_.build) Hizzy.build().then(r => r);
+            if (_argv_.build || conf.autoBuild || _argv_.force) Hizzy.build().then(r => r);
             else if (conf.listen) Hizzy.scanBuild().then(r => r);
         }
     }

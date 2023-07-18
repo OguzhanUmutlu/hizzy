@@ -1106,7 +1106,7 @@ class API extends EventEmitter {
     };
 
     async build() {
-        if (this.dev) return;
+        if (this.dev && !arguments.force) return;
         if (this.#isBuilding) await this.#buildPromise;
         this.#isBuilding = true;
         let onEnd;
