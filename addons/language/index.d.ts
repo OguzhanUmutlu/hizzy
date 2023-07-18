@@ -1,9 +1,10 @@
+// @ts-ignore
 import Hizzy from "hizzy";
 
 declare class LanguageAddon extends Hizzy.API.AddonModule {
 }
 
-type pkg = LanguageAddon | (((props?: {
+type pkg = LanguageAddon & (((props?: {
     children: string
 }) => any) & {
     get language(): string

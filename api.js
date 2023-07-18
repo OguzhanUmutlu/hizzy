@@ -855,7 +855,7 @@ class API extends EventEmitter {
         if (Object.keys(config.static).length === 0) return this.notFound(req, res);
         const l = req.url.substring(1).split("?")[0];
         for (const folder in config.static) {
-            const p = path.join(this.#dir, folder, config.static[folder], l);
+            const p = path.join(this.#dir, folder, l, config.static[folder]);
             if (fs.existsSync(p) && fs.statSync(p).isFile()) return this.sendFile(l, fs.readFileSync(p), req, res, false);
         }
         return this.notFound(req, res);

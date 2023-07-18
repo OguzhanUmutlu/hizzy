@@ -1,6 +1,7 @@
+// @ts-ignore
+import Hizzy from "hizzy";
 import {NextFunction, Request, Response} from "express";
 import {EventEmitter} from "events";
-import Hizzy from "hizzy";
 
 type CookieAuthOptions = {
     cookie?: string

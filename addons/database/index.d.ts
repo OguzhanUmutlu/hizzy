@@ -1,9 +1,10 @@
 // noinspection JSUnusedGlobalSymbols
 
+// @ts-ignore
+import Hizzy from "hizzy";
 import {Database} from "sqlite";
 import {createConnection} from "mysql";
 import {MongoClient, MongoClientOptions} from "mongodb";
-import Hizzy from "hizzy";
 
 type XML_JSON = {
     [x: string]: XML_JSON | string,

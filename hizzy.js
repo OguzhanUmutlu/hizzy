@@ -232,9 +232,7 @@ if (isTerminal && args[0]) {
         "mainModule": true,
         "checkConfig": true,
         "realtime": true,
-        "static": {
-            "static": ""
-        },
+        "static": {},
         "https": false,
         "srcFolder": "src",
         "connectionTimeout": 60000,

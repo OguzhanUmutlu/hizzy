@@ -1,3 +1,4 @@
+// @ts-ignore
 import Hizzy from "hizzy";
 
 declare class ImagesAddon extends Hizzy.API.AddonModule {
