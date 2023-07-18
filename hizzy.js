@@ -104,7 +104,7 @@ if (isTerminal && _argv_.help) {
     printer.raw.log("%c    -v, --version%c            shows the version", "color: green", "color: yellow");
     printer.raw.log("%c    --advanced-version%c       shows advanced information", "color: green", "color: yellow");
     printer.raw.log("%c    -b, --build%c              only builds the project and exits", "color: green", "color: yellow");
-    printer.raw.log("%c    --host%c                   sets the hostname", "color: green", "color: yellow");
+    printer.raw.log("%c    --host%c                   toggles the view of IPv4", "color: green", "color: yellow");
     printer.raw.log("%c    --config=PATH%c            sets the config file's path", "color: green", "color: yellow");
     printer.raw.log("%c    -p=PORT, --port=PORT%c     sets the port (0 = random)", "color: green", "color: yellow");
     printer.raw.log("%c    -f, --force%c              forces auto build", "color: green", "color: yellow");
