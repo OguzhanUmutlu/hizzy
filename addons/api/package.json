@@ -1,5 +1,5 @@
 {
-  "name": "hizzy-api",
+  "name": "@hizzyjs/api",
   "description": "Hizzy's official API support",
   "version": "1.0.1",
   "main": "index.js",

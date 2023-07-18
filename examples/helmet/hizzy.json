@@ -15,6 +15,6 @@
   "keepaliveTimeout": 30000,
   "clientKeepalive": 20000,
   "minClientKeepalive": 8000,
-  "addons": ["hizzy-helmet"],
+  "addons": ["@hizzyjs/helmet"],
   "includeOriginalInBuild": true
 }

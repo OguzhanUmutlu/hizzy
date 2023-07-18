@@ -17,6 +17,6 @@
   "keepaliveTimeout": 30000,
   "clientKeepalive": 20000,
   "minClientKeepalive": 8000,
-  "addons": ["hizzy-images"],
+  "addons": ["@hizzyjs/images"],
   "includeOriginalInBuild": true
 }

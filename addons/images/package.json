@@ -1,5 +1,5 @@
 {
-  "name": "hizzy-images",
+  "name": "@hizzyjs/images",
   "description": "Hizzy's official image support",
   "version": "1.0.1",
   "main": "index.js",

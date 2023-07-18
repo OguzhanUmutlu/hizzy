@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "hizzy-authentication": "^1.0.0"
+    "@hizzyjs/authentication": "^1.0.0"
   }
 }

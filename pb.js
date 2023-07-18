@@ -47,9 +47,9 @@ const run = (command, args = []) => new Promise(r => {
     if (await request()) {
         for (const f of fs.readdirSync("./addons")) {
             process.stdout.write("Want to publish the addon at '/addons/" + f + "'? (y/n) ");
-            if (await request()) await run("cd ./addons/" + f + " && npm publish");
+            if (await request()) await run("cd ./addons/" + f + " && npm publish --access public");
         }
     }
     process.stdout.write("Want to publish the package? (y/n) ");
-    if (await request()) await run("npm publish");
+    if (await request()) await run("npm publish --access public");
 })();

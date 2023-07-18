@@ -1,4 +1,4 @@
-import Database from "hizzy-database";
+import Database from "@hizzyjs/database";
 
 const db = new Database.SQLite();
 await db.open();

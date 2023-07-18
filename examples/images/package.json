@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "hizzy-images": "^1.0.1"
+    "@hizzyjs/images": "^1.0.1"
   }
 }

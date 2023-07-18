@@ -1,5 +1,5 @@
 {
-  "name": "hizzy-requests",
+  "name": "@hizzyjs/requests",
   "description": "Hizzy's official request management support",
   "version": "1.0.1",
   "main": "index.js",

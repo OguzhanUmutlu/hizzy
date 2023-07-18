@@ -1,5 +1,5 @@
 {
-  "name": "hizzy-database",
+  "name": "@hizzyjs/database",
   "description": "Hizzy's official database support",
   "version": "1.0.2",
   "main": "index.js",

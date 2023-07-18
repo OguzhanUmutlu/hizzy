@@ -1,5 +1,5 @@
 {
-  "name": "hizzy-helmet",
+  "name": "@hizzyjs/helmet",
   "description": "Hizzy's official helmet support",
   "version": "1.0.1",
   "main": "index.js",

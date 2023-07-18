@@ -1,5 +1,5 @@
 {
-  "name": "hizzy-error-overlay",
+  "name": "@hizzyjs/error-overlay",
   "description": "Hizzy's official error overlay support",
   "version": "1.0.1",
   "main": "index.js",

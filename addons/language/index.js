@@ -32,7 +32,7 @@ module.exports = class LanguageAddon extends AddonModule {
                 language: {
                     get: () => lang,
                     set: s => {
-                        if (!container[lang]) throw new Error("hizzy-language: Invalid language: " + lang);
+                        if (!container[lang]) throw new Error("@hizzyjs/language: Invalid language: " + lang);
                         lang = s;
                         hooks.forEach(([s, k]) => s(container[lang][k] || ""));
                     }
@@ -47,7 +47,7 @@ module.exports = class LanguageAddon extends AddonModule {
                     get: () => {
                         const L = Object.keys(container);
                         let index = L.indexOf(lang);
-                        if (index === -1) throw new Error("hizzy-language: Invalid language!");
+                        if (index === -1) throw new Error("@hizzyjs/language: Invalid language!");
                         if (index === L.length - 1) index = -1;
                         return L[index + 1];
                     }

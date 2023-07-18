@@ -233,7 +233,7 @@ class Addon {
         try {
             let pkgPath = path.join(Hizzy.directory, "node_modules", name, "package.json");
             /*
-            if (HIZZY_EXPERIMENTAL && name.startsWith("hizzy-")) {
+            if (HIZZY_EXPERIMENTAL && name.startsWith("@hizzyjs/")) {
                 name = path.join(__dirname, "addons", name.substring(6));
                 pkgPath = path.join(name, "package.json");
                 name = url.pathToFileURL(name).href;

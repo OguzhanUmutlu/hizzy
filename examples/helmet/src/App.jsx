@@ -1,4 +1,4 @@
-import Helmet from "hizzy-helmet";
+import Helmet from "@hizzyjs/helmet";
 
 export default <>
     <Helmet>

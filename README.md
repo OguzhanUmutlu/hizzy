@@ -20,22 +20,22 @@ To run your app, simply type: `hizzy`!
 * [Installation](#installation)
 * [Production Configuration](#production-configuration)
 * [Built-in addons](#built-in-addons)
-  * [hizzy-database](#hizzy-database)
+  * [@hizzyjs/database](#hizzyjsdatabase)
     * [SQLite Support](#sqlite-support)
     * [MongoDB Support](#mongodb-support)
     * [MySQL Support](#mysql-support)
     * [JSON Database Support](#json-database-support)
     * [YAML Database Support](#yaml-database-support)
     * [XML Support](#xml-support)
-  * [hizzy-language](#hizzy-language)
-  * [hizzy-authentication](#hizzy-authentication)
+  * [@hizzyjs/language](#hizzyjslanguage)
+  * [@hizzyjs/authentication](#hizzyjsauthentication)
     * [Local authentication](#local-authentication)
     * [Discord authentication](#discord-authentication)
-  * [hizzy-error-overlay](#hizzy-error-overlay)
-  * [hizzy-api](#hizzy-api)
-  * [hizzy-helmet](#hizzy-helmet)
-  * [hizzy-images](#hizzy-images)
-  * [hizzy-requests](#hizzy-requests)
+  * [@hizzyjs/error-overlay](#hizzyjserror-overlay)
+  * [@hizzyjs/api](#hizzyjsapi)
+  * [@hizzyjs/helmet](#hizzyjshelmet)
+  * [@hizzyjs/images](#hizzyjsimages)
+  * [@hizzyjs/requests](#hizzyjsrequests)
 * [🏎️ Blazingly fast and small-sized! 🏎️](#-blazingly-fast-and-small-sized-)
   * [Statistics](#statistics)
 * [JSX Support](#jsx-support)
@@ -71,7 +71,7 @@ You should turn `dev` off by setting it to `false`.
 
 # Built-in addons
 
-## hizzy-database
+## @hizzyjs/database
 
 This addon adds these databases:
 
@@ -87,13 +87,13 @@ This addon adds these databases:
 
 ### XML Support
 
-## hizzy-language
+## @hizzyjs/language
 
 This addon adds language support to your page!
 
 Check the [Language Support Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/language)
 
-## hizzy-authentication
+## @hizzyjs/authentication
 
 ### Local authentication
 
@@ -104,24 +104,24 @@ Check the [Local Authentication Example on Github](https://github.com/OguzhanUmu
 Check
 the [Discord Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
 
-## hizzy-error-overlay
+## @hizzyjs/error-overlay
 
 An addon that makes a popup for errors whenever something doesn't work which helps you maintain your project easily!
 
 This feature is not fully done.
 
-## hizzy-api
+## @hizzyjs/api
 
 This feature is not fully done.
 
-## hizzy-helmet
+## @hizzyjs/helmet
 
 This addon lets you append things on the `<head>` tag using a custom tag named `<Helmet>`!
 
 Example:
 
 ```jsx
-import Helmet from "hizzy-helmet";
+import Helmet from "@hizzyjs/helmet";
 
 export default <>
     <Helmet>
@@ -133,7 +133,7 @@ export default <>
 
 Check the [Helmet Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/helmet)
 
-## hizzy-images
+## @hizzyjs/images
 
 An addon that adds a better progressive load to images that first shows the image's blurred version then the actual
 image.
@@ -142,7 +142,7 @@ This feature is not fully done.
 
 Check the [Images Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/images)
 
-## hizzy-requests
+## @hizzyjs/requests
 
 This feature is not fully done.
 

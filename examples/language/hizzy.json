@@ -18,7 +18,7 @@
   "clientKeepalive": 20000,
   "minClientKeepalive": 8000,
   "addons": {
-    "hizzy-language": {
+    "@hizzyjs/language": {
       "directory": "langs"
     }
   },

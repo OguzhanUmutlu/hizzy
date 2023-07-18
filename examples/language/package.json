@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "hizzy-language": "^1.0.1"
+    "@hizzyjs/language": "^1.0.1"
   }
 }

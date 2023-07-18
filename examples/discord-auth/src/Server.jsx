@@ -1,5 +1,5 @@
 import {config} from "dotenv";
-import Auth from "hizzy-authentication";
+import Auth from "@hizzyjs/authentication";
 
 config();
 
