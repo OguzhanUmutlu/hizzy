@@ -1,8 +1,7 @@
 const fs = require("fs");
 const {exec} = require("child_process");
-const printer = require("fancy-printer");
 
-const run = (command, args = []) => new Promise(r => {
+const run = command => new Promise(r => {
     const proc = exec(command);
     proc.stdout.on("data", chunk => process.stdout.write(chunk));
     proc.on("exit", r);
@@ -27,7 +26,6 @@ const run = (command, args = []) => new Promise(r => {
     // steps of publish:
     // node pb
     // node hizzy --injections (exit after injection build being completed)
-    // cd addons && cd api && npm publish && cd ../authentication && npm publish && cd ../database && npm publish && cd ../error-overlay && npm publish && cd ../helmet && npm publish && cd ../images && npm publish && cd ../language && npm publish && cd ../requests && npm publish
     // npm publish
     files.forEach(i => {
         if (i.endsWith(".js")) {

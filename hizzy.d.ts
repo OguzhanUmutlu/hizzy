@@ -44,6 +44,8 @@ export const config: Record<string, string>;
 /** @internal */
 export const args: Record<string, string | boolean>;
 
+export function resolvePath(path: string): string;
+
 export {
     useCallback,
     useContext,

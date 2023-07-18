@@ -1,4 +1,5 @@
 import {useState} from "hizzy";
+import imgURL from "../assets/hizzy.svg";
 import "./App.css";
 
 // @server
@@ -23,7 +24,7 @@ function Main() {
     }
 
     return <div className="container">
-        <a href="https://hizzyjs.github.io/" target="_blank"><img src="../assets/hizzy.svg" className="logo"
+        <a href="https://hizzyjs.github.io/" target="_blank"><img src={imgURL} className="logo"
                                                                   alt="Hizzy Logo" draggable={false}/></a>
         <h1>Hizzy</h1>
         <button onClick={onClick} onContextMenu={onClick}>count is {count}</button>

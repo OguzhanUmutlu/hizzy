@@ -1,19 +1,17 @@
 // noinspection TypeScriptUMDGlobal
 
+
 (async () => {
     Object.defineProperty(window, "_eval_", {
         get: () => (..._$$R$$) => {
-            const s = _$$R$$;
-            // console.log("evaluating:", s[0]);
-            return eval(s[0]);
+            return eval(_$$R$$[0]); // runs with arguments
         }
     });
-    Object.defineProperty(window, "__eval__", {
-        get: () => (_$$R$$) => eval(_$$R$$)
-    });
+    Object.freeze(window.eval);
+    Object.freeze(window._eval_);
 })();
 (async () => {
-    const [R, R2, T, TIMEOUT, mainFileI, filesI, DEV, EXP] = $$CONF$$;
+    const [R, R2, T, TIMEOUT, mainFileI, filesI, DEV, EXP, STATIC] = $$CONF$$;
     const {CLIENT2SERVER, SERVER2CLIENT} = {
         CLIENT2SERVER: {
             HANDSHAKE_RESPONSE: "0", // agreed on shaking the hand
@@ -116,6 +114,7 @@
     const runCode = (code, args = [], async = false) => {
         return _eval_("(" + (async ? "async" : "") + "()=>{" + `${args.map((i, j) => `const ${i[0]}=_${R}[${j + 1}];`).join("")}${code}` + "})", ...args.map(i => i[1]))();
     };
+    const runModuleCode = code => import(URL.createObjectURL(new Blob([code], {type: "application/javascript"})));
     await handshookPromise;
     await loadPromise;
     sendToSocket(CLIENT2SERVER.HANDSHAKE_RESPONSE);
@@ -148,6 +147,49 @@
         }
         return p.join("/");
     };
+    const fileHandlers = {
+        build: {
+            html: (name, content) => {
+                exports[name] = {default: new DOMParser().parseFromString(content, "text/html")};
+                hasExported.push(name);
+                return exports[name];
+            },
+            css: (name, content) => {
+                const style = document.createElement("style");
+                style.innerHTML = content;
+                document.head.appendChild(style);
+                exports[name] = {default: style};
+                hasExported.push(name);
+                return exports[name];
+            },
+            js: async (name, content) => {
+                exports[name] = {default: await runCode(content, [], true)};
+                hasExported.push(name);
+                return exports[name];
+            }
+        },
+        external: {
+            html: (name, content) => ({default: new DOMParser().parseFromString(content, "text/html")}),
+            css: (name, content) => {
+                let st = document.createElement("style");
+                st.innerHTML = content;
+                document.head.appendChild(st);
+                return {default: st};
+            },
+            js: (name, content) => runModuleCode(content),
+            json: (name, content) => ({default: JSON.parse(content)})
+        }
+    };
+    Hizzy.resolvePath = p => {
+        p = pathJoin(p);
+        for (const folder in STATIC) {
+            const show = STATIC[folder];
+            const st = pathJoin(folder, []).replaceAll("\\", "/") + "/";
+            if (!p.startsWith(st)) continue;
+            return show + "/" + p.substring(st.length);
+        }
+        return p;
+    };
     const import_ = async (f, _from, extra = []) => {
         if (f === "hizzy") return Hizzy;
         if (f === "react") return react;
@@ -158,46 +200,31 @@
         const path = pathJoin(f);
         const file = files[path] || files[path + ".jsx"] || files[path + ".tsx"];
         const fName = files[path] ? path : (files[path + ".jsx"] ? path + ".jsx" : path + ".tsx");
+        const _fExtSpl = fName.split(".");
+        const fExt = _fExtSpl.length <= 1 ? "" : _fExtSpl[_fExtSpl.length - 1];
         if (hasExported.includes(fName)) return exports[fName];
-        if (!fName.endsWith(".jsx") && !fName.endsWith(".tsx") && file) {
-            const str = () => typeof file === "string" ? file : file.map(i => String.fromCharCode(i)).join("");
-            if (fName.endsWith(".css")) {
-                const style = document.createElement("style");
-                style.innerHTML = str();
-                document.head.appendChild(style);
-                exports[fName] = {default: style};
+        if (fExt !== "jsx" && fExt !== "tsx" && file) {
+            const fH = fileHandlers.build[fExt];
+            if (fH) {
                 hasExported.push(fName);
-                return exports[fName];
-            } else if (fName.endsWith(".html")) {
-                exports[fName] = {default: new DOMParser().parseFromString(str(), "text/html")};
-                hasExported.push(fName);
-                return exports[fName];
-            } else if (fName.endsWith(".js")) {
-                exports[fName] = {default: await runCode(str(), [], true)};
-                hasExported.push(fName);
-                return exports[fName];
+                return exports[fName] = await fH(fName, file);
             }
-            return str();
+            return {default: Hizzy.resolvePath(f)};
         }
-        if (!file) {
+        if (typeof file === "undefined") {
             if (f.startsWith("https://") || f.startsWith("http://")) {
-                const response = await fetch(f);
-                const type = response.headers.get("Content-Type");
-                let content = await response.text();
-                if (type === "text/css") {
-                    let st = document.createElement("style");
-                    st.innerHTML = content;
-                    document.head.appendChild(st);
-                    return {default: st};
-                } else if (type === "application/json") return {default: JSON.parse(content)};
-                else if (type === "text/html") return {default: new DOMParser().parseFromString(content, "text/html")};
-                else if (type === "application/javascript") return __eval__(content);
-            } else {
+                const fH = fileHandlers.external[fExt];
+                if (fH) {
+                    hasExported.push(fName);
+                    return exports[fName] = await fH(fName, await (await fetch(f)).text());
+                }
+                return {default: Hizzy.resolvePath(f)};
+            } else if (["html", "css", "js"].includes(fExt)) {
                 d.cookie = "__hizzy__=" + key;
                 const a = await import("http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__import__/" + path));
                 d.cookie = "__hizzy__=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
                 return a;
-            }
+            } else return {default: Hizzy.resolvePath(f)};
         }
         const getting = {load: {}, normal: {}};
         await runCode(file.code + `${file.client.map(i => `__hizzy_get${R}__.normal.${i}=typeof ${i}!="undefined"?${i}:void 0;`).join("")}${file.clientLoad.map(i => `__hizzy_get${R}__.load.${i}=${i};`).join("")}`, [
@@ -221,9 +248,9 @@
         sendToSocket(CLIENT2SERVER.SERVER_FUNCTION_REQUEST + "" + id + ":" + page + ":" + func + ":" + JSON.stringify(args));
         if (files[page].respondFunctions.includes(func)) return new Promise(r => evalResponses[id] = r);
     };
-    // todo: client can create workers, they should be terminated before a navigation, also assignments to `window` or any other global variable stay
+// todo: client can create workers, they should be terminated before a navigation, also assignments to `window` or any other global variable stay
     const addonExports = {};
-    // BEFORE LOAD:
+// BEFORE LOAD:
     const doAddon = async (index, ...a) => {
         for (let i = 0; i < ADDONS.length; i++) {
             const addon = ADDONS[i];
@@ -325,6 +352,7 @@
         await doAddon(2); // on client side rendered
         onRender();
     };
-    // LOADING THE ACTUAL PAGE:
+// LOADING THE ACTUAL PAGE:
     await loadPage(mainFile);
-})();
+})
+();

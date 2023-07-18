@@ -44,7 +44,8 @@ let hizzy = {};
 const hizzyPath = path.join(__dirname, "hizzy.js");
 const hizzyMinPath = path.join(__dirname, "hizzy.min.js");
 if (isTerminal) hizzy = require(fs.existsSync(hizzyPath) ? hizzyPath : hizzyMinPath);
-const {args: arguments, config} = hizzy;
+const {args: argv, config} = hizzy;
+const staticJSON = JSON.stringify(config?.static);
 
 // todo: maybe split static into two, static and dynamic. static = cached, dynamic = not cached
 // todo: use esbuild
@@ -527,7 +528,7 @@ class API extends EventEmitter {
             delete this.#clientPages[uuid];
             const client = new Client(socket);
             socket._send = s => {
-                if (arguments["debug-socket"]) printer.dev.debug("> " + s);
+                if (argv["debug-socket"]) printer.dev.debug("> " + s);
                 if (!socket._closed) socket.send(s);
             };
             clearTimeout(this.#uuidTimeout[uuid]);
@@ -603,7 +604,7 @@ class API extends EventEmitter {
                 try {
                     data = data.toString();
                     if (socket._closed) return;
-                    if (arguments["debug-socket"]) printer.dev.debug("< " + data);
+                    if (argv["debug-socket"]) printer.dev.debug("< " + data);
                     if (data[0] === CLIENT2SERVER.HANDSHAKE_RESPONSE) { // handshake finished
                         if (socket._handshook) return close("one handshake is enough");
                         socket._handshook = true;
@@ -772,10 +773,14 @@ class API extends EventEmitter {
         this.#hashes[req._uuid] = r;
         await this.sendRawFile(".html", `<script data-rm=${r} type=module>${jsxInjection
             .replace("$$R$$", r)
-            .replace("$$R$$", r) // it's important that it's ran exactly 2 times!
-            .replace("$$CONF$$", "['" + r + "','" + (this.#buildRuntimeId || runtimeId) + "'," + this.#builtAt + "," +
-                (config.keepaliveTimeout > 0 ? config.clientKeepalive : -1) + "," + req._RouteJSON + "," +
-                await this.#getPagePacket(file, code, req, res) + "," + (this.dev ? 1 : 0) + ",'" + experimentalId + "']"
+            .replace("$$R$$", r)
+            .replace("$$R$$", r)
+            .replace("$$R$$", r) // it's important that it's ran exactly 4 times!
+            .replace("$$CONF$$",
+                `['${r}','${this.#buildRuntimeId || runtimeId}',${this.#builtAt},` +
+                `${config.keepaliveTimeout > 0 ? config.clientKeepalive : -1},${req._RouteJSON},` +
+                `${await this.#getPagePacket(file, code, req, res)},${this.dev ? 1 : 0},` +
+                `'${experimentalId}',${staticJSON}]`
             )
         }</script>`, req, res);
     };
@@ -789,7 +794,7 @@ class API extends EventEmitter {
             try {
                 await this.#builtJSX(file, code, req, res, files, pk);
             } catch (e) {
-                printer.dev.error(e);
+                // printer.dev.error(e);
                 res.json({error: "Internal server error"});
                 return;
             }
@@ -855,7 +860,11 @@ class API extends EventEmitter {
         if (Object.keys(config.static).length === 0) return this.notFound(req, res);
         const l = req.url.substring(1).split("?")[0];
         for (const folder in config.static) {
-            const p = path.join(this.#dir, folder, l, config.static[folder]);
+            const show = config.static[folder];
+            const st = path.join(show).replaceAll("\\", "/") + "/";
+            if (!l.startsWith(st)) continue;
+            const rest = l.substring(st.length);
+            const p = path.join(this.#dir, folder, rest);
             if (fs.existsSync(p) && fs.statSync(p).isFile()) return this.sendFile(l, fs.readFileSync(p), req, res, false);
         }
         return this.notFound(req, res);
@@ -887,7 +896,7 @@ class API extends EventEmitter {
     #sendURLs() {
         const {address, family} = this.#serverAddress;
         printer.raw.log(`  %c➜%c  Local:   %c${this.#formatLocalURL(family === "IPv6" ? "localhost" : address)}`, "color: greenBright", "", "color: cyan");
-        if (arguments.host) printer.raw.log(`  %c➜%c  Network: %c` + addresses.map(i => this.#formatLocalURL(i)).join(", "), "color: greenBright", "", "color: cyan");
+        if (argv.host) printer.raw.log(`  %c➜%c  Network: %c` + addresses.map(i => this.#formatLocalURL(i)).join(", "), "color: greenBright", "", "color: cyan");
         else printer.raw.log(`  %c➜  Network: use %c--host%c to expose`, "color: gray", "", "color: gray");
     };
 
@@ -914,7 +923,7 @@ class API extends EventEmitter {
     async listen() {
         if (this.#listening) await new Promise(r => this.server.close(r));
         this.#listening = false;
-        let port_ = (arguments.port || config.port) * 1;
+        let port_ = (argv.port || config.port) * 1;
         if (port_ < 0) port_ = 0;
         this.#port = port_;
         await new Promise(r => this.server.listen(port_, () => r(true)));
@@ -949,7 +958,7 @@ class API extends EventEmitter {
         printer.println("");
         printer.inline.log(`  %c➜%c  Mode:    %c${this.dev ? "Development" : "Production"}`, "color: greenBright", "", "color: " + (this.dev ? "orange" : "green"));
         if (port_ <= 0) printer.inline.log("%c, randomized port", "color: gray");
-        if (arguments.debug) printer.inline.log("%c, debugging", "color: gray");
+        if (argv.debug) printer.inline.log("%c, debugging", "color: gray");
         printer.inline.print("\n");
         this.#sendURLs();
         printer.raw.log(`  %c➜%c  press %ch%c to show help\n`, "color: gray", "color: gray", "color: whiteBright", "color: gray");
@@ -1073,7 +1082,7 @@ class API extends EventEmitter {
                 cmdCooldown[c] = Date.now();
             })();
         });
-        if (arguments.open) this.openInBrowser();
+        if (argv.open) this.openInBrowser();
     };
 
     async #buildInternal(to, dat = [0], zip) {
@@ -1106,7 +1115,7 @@ class API extends EventEmitter {
     };
 
     async build() {
-        if (this.dev && !arguments.force) return;
+        if (this.dev && !argv.force) return;
         if (this.#isBuilding) await this.#buildPromise;
         this.#isBuilding = true;
         let onEnd;
@@ -1173,7 +1182,7 @@ class API extends EventEmitter {
         } else printer.dev.warn("Skipping building since there is no %c/" + config.srcFolder + "&t folder...", "color: orange");
         this.#isBuilding = false;
         onEnd();
-        if (!this.#buildCache && !arguments.build) await this.scanBuild();
+        if (!this.#buildCache && !argv.build) await this.scanBuild();
     };
 
     async scanBuild() {
@@ -1249,7 +1258,7 @@ class API extends EventEmitter {
         this.#buildRuntimeId = buildRuntimeId;
         if (mainCode) await this.processMain(mainCode);
         onEnd();
-        if (!this.#listening && config.listen && !arguments.build) await this.listen();
+        if (!this.#listening && config.listen && !argv.build) await this.listen();
     };
 
     async #pseudoBuildJSX(file, code, json, inits) {
@@ -1494,8 +1503,8 @@ class API extends EventEmitter {
             },
             Import: ({parent}) => {
                 if (parent.type !== "CallExpression") return;
-                if (parent.arguments.length >= 1) {
-                    const inside = clip(parent.arguments[0]);
+                if (parent.argv.length >= 1) {
+                    const inside = clip(parent.argv[0]);
                     // hizzy prefix:
                     replaceText(parent, impNm[inside] || `await H${runtimeId}.I${runtimeId}(${inside},${fileJ});`);
                 }
