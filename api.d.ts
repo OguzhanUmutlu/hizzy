@@ -176,6 +176,8 @@ declare class APIClass {
         set: (value: T | ((current: T) => T)) => T
         delete: () => void
     };
+
+    watchFile(file: string): void;
 }
 
 declare global {

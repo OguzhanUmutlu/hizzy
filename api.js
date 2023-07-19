@@ -766,6 +766,7 @@ class API extends EventEmitter {
         if (!this.#realtime) return res.json({error: "Expected 'realtime' option in the Hizzy configuration file to be true."});
         if (fromScript) {
             const cPages = await this.#getPagePacket(file, code, req, res);
+            if (res.headersSent) return;
             req.__socket._externalLoad(file, this.#clientPages[req._uuid]);
             if (req.headers["hizzy-cache"] === "yes") return res.send("ok");
             return res.send(req._RouteJSON + "\u0000" + cPages);
@@ -794,7 +795,7 @@ class API extends EventEmitter {
             try {
                 await this.#builtJSX(file, code, req, res, files, pk);
             } catch (e) {
-                // printer.dev.error(e);
+                printer.dev.error(e);
                 res.json({error: "Internal server error"});
                 return;
             }
@@ -803,28 +804,29 @@ class API extends EventEmitter {
             if (!this.dev) this.#builtJSXPage[l] = [files, pkJ];
         }
         this.#clientPages[req._uuid] = [files, path.join(file)];
-        this.#watchFile(req._Route);
+        this.watchFile(req._Route);
         return pkJ;
     };
 
     async renderHTML(file, content, req, res) {
         this.prepLoad(req, res);
         const r = this.random();
-        this.#watchFile(req._Route);
+        this.watchFile(req._Route);
         await this.sendRawFile(".html", content + (this.#realtime ? `<script data-rm=${r}>` + htmlInjection
             .replace("$R", r)
             .replace("$T", config.keepaliveTimeout > 0 ? config.clientKeepalive : -1) + `</script>` : ""), req, res
         );
     };
 
-    #watchFile(file) {
-        if (!this.dev || this.#watchingFiles[file] || !this.autoRefresh) return;
-        if (!file.endsWith(".html") && !file.endsWith(".jsx") && !file.endsWith(".tsx")) return; // todo: maybe if one updates, update everything related
-        this.#watchingFiles[file] = true;
+    watchFile(file) {
+        const fN = path.join(file);
+        if (!this.dev || this.#watchingFiles[fN] || !this.autoRefresh) return;
+        // if (!file.endsWith(".html") && !file.endsWith(".jsx") && !file.endsWith(".tsx")) return; // todo: read bottom
+        this.#watchingFiles[fN] = true;
         fs.watchFile(path.join(this.#dir, config.srcFolder, file), {interval: 1}, () => {
             for (const uuid in this.#clients) {
                 const client = this.#clients[uuid];
-                if (client._URL_ !== file) return;
+                // if (client._URL_ !== file) return; // todo: re-enable this with connection checks
                 client._send(SERVER2CLIENT.FILE_REFRESH);
             }
         });
@@ -861,8 +863,8 @@ class API extends EventEmitter {
         const l = req.url.substring(1).split("?")[0];
         for (const folder in config.static) {
             const show = config.static[folder];
-            const st = path.join(show).replaceAll("\\", "/") + "/";
-            if (!l.startsWith(st)) continue;
+            const st = show ? path.join(show).replaceAll("\\", "/") + "/" : "";
+            if (st && !l.startsWith(st)) continue;
             const rest = l.substring(st.length);
             const p = path.join(this.#dir, folder, rest);
             if (fs.existsSync(p) && fs.statSync(p).isFile()) return this.sendFile(l, fs.readFileSync(p), req, res, false);
@@ -1503,10 +1505,10 @@ class API extends EventEmitter {
             },
             Import: ({parent}) => {
                 if (parent.type !== "CallExpression") return;
-                if (parent.argv.length >= 1) {
-                    const inside = clip(parent.argv[0]);
+                if (parent.arguments.length >= 1) {
+                    const inside = clip(parent.arguments[0]);
                     // hizzy prefix:
-                    replaceText(parent, impNm[inside] || `await H${runtimeId}.I${runtimeId}(${inside},${fileJ});`);
+                    replaceText(parent, impNm[inside] || `H${runtimeId}.I${runtimeId}(${inside},${fileJ})`);
                 }
                 /*import * as D from "./App2";
                 import A from "./App2"

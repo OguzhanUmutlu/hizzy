@@ -283,6 +283,7 @@ if (isTerminal && args[0]) {
     const apiPath = path.join(__dirname, "api.js");
     const apiMinPath = path.join(__dirname, "api.min.js");
     global[__PRODUCT_U__] = new (require(fs.existsSync(apiPath) ? apiPath : apiMinPath))(dir);
+    if (conf.fileRefresh) Hizzy.autoRefresh = true;
     const mainPath = path.join(dir, conf.srcFolder, conf.main);
     const mainExtension = path.extname(mainPath);
     if (!fs.existsSync(mainPath)) {
@@ -326,7 +327,6 @@ if (isTerminal && args[0]) {
             await Hizzy.processMain(Hizzy.jsxToJS(fs.readFileSync(mainPath), mainExtension));
         }
         if (conf.realtime) Hizzy.enableRealtime();
-        if (conf.fileRefresh) Hizzy.autoRefresh = true;
         if (Hizzy.dev) {
             if (conf.listen) Hizzy.listen().then(r => r);
         } else {

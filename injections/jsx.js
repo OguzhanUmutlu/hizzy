@@ -1,10 +1,12 @@
 // noinspection TypeScriptUMDGlobal
 
-
 (async () => {
     Object.defineProperty(window, "_eval_", {
-        get: () => (..._$$R$$) => {
-            return eval(_$$R$$[0]); // runs with arguments
+        get: () => (..._$$R$$) => { // runs with arguments
+            // const ____________ = _$$R$$;
+            // console.log(____________[0]);
+            // return eval(____________[0]);
+            return eval(_$$R$$[0]);
         }
     });
     Object.freeze(window.eval);
@@ -124,6 +126,7 @@
     let files = filesI;
     let exports = {};
     let hasExported = [];
+    let fetchCache = {};
     ///
 
     await handshookSurePromise;
@@ -190,12 +193,25 @@
         }
         return p;
     };
+    const urlExport = f => ({default: Hizzy.resolvePath(f)});
     const import_ = async (f, _from, extra = []) => {
-        if (f === "hizzy") return Hizzy;
-        if (f === "react") return react;
-        if (f === "preact") return react;
-        if (f === "hooks") return __hooks;
-        if (addonExports[f]) return {default: addonExports[f]};
+        const query = new URLSearchParams(f.includes("?") ? f.split("?").slice(1).join("?") : "");
+        const isURL = query.get("url") === "";
+        const isRaw = query.get("raw") === "";
+        if (isURL && isRaw) throw new Error("An import can't have both '?url' and '?raw'!");
+        if (f === "hizzy") {
+            if (isURL || isRaw) throw new Error("Cannot use the '?url' or the '?raw' on Hizzy!");
+            return Hizzy;
+        }
+        if (f === "react" || f === "preact") {
+            if (isURL || isRaw) throw new Error("Cannot use the '?url' or the '?raw' on React!");
+            return react;
+        }
+        if (addonExports[f]) {
+            if (isURL || isRaw) throw new Error("Cannot use the '?url' or the '?raw' on addons!");
+            return {default: addonExports[f]};
+        }
+        if (isURL) return urlExport(f);
         const relativeP = f.startsWith(".");
         const path = pathJoin(f);
         const file = files[path] || files[path + ".jsx"] || files[path + ".tsx"];
@@ -204,28 +220,43 @@
         const fExt = _fExtSpl.length <= 1 ? "" : _fExtSpl[_fExtSpl.length - 1];
         if (hasExported.includes(fName)) return exports[fName];
         if (fExt !== "jsx" && fExt !== "tsx" && file) {
+            if (isRaw) return {default: file, content: file};
             const fH = fileHandlers.build[fExt];
             if (fH) {
                 hasExported.push(fName);
                 return exports[fName] = await fH(fName, file);
             }
-            return {default: Hizzy.resolvePath(f)};
+            return urlExport(f);
         }
         if (typeof file === "undefined") {
             if (f.startsWith("https://") || f.startsWith("http://")) {
                 const fH = fileHandlers.external[fExt];
+                const content = fetchCache[f] = fetchCache[f] ?? (await (await fetch(f)).text());
                 if (fH) {
                     hasExported.push(fName);
-                    return exports[fName] = await fH(fName, await (await fetch(f)).text());
+                    return exports[fName] = isRaw ? {default: content, content} : await fH(fName, content);
                 }
-                return {default: Hizzy.resolvePath(f)};
+                if (isRaw) return {default: content, content};
+                return urlExport(f);
             } else if (["html", "css", "js"].includes(fExt)) {
+                const url = "http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__import__/" + path);
                 d.cookie = "__hizzy__=" + key;
-                const a = await import("http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__import__/" + path));
+                let a;
+                if (isRaw) {
+                    const content = await (await fetch(url)).text();
+                    a = {default: content, content};
+                } else a = await import(url);
                 d.cookie = "__hizzy__=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
                 return a;
-            } else return {default: Hizzy.resolvePath(f)};
+            } else {
+                if (isRaw) {
+                    const content = fetchCache[f] = fetchCache[f] ?? (await (await fetch(f)).text());
+                    return {default: content, content};
+                }
+                return urlExport(f);
+            }
         }
+        if (isRaw) throw new Error("Cannot use the '?raw' on JSX/TSX files!");
         const getting = {load: {}, normal: {}};
         await runCode(file.code + `${file.client.map(i => `__hizzy_get${R}__.normal.${i}=typeof ${i}!="undefined"?${i}:void 0;`).join("")}${file.clientLoad.map(i => `__hizzy_get${R}__.load.${i}=${i};`).join("")}`, [
             ["R" + R2, (...a) => react.createElement(...a)],
@@ -305,6 +336,7 @@
         d.cookie = "__hizzy__=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
         exports = {};
         hasExported = [];
+        fetchCache = {};
         for (const f in files) exports[f] = {};
         pageCache[actual] = {mainFile, files};
         if (push) history.pushState({
@@ -313,6 +345,7 @@
         await loadPage(mainFile);
     };
     const reloadPage = () => fetchPage(location.pathname);
+    Hizzy.fetch = async (url, options = {}) => await (await fetch(url, options))[options.json ? "json" : "text"]();
     Hizzy.openPage = p => fetchPage(p);
     Hizzy.reloadPage = () => reloadPage();
     Hizzy.LinkComponent = props => {
@@ -346,6 +379,7 @@
                 }
             }
         } catch (e) {
+            console.error("An error occurred while rendering the file: " + file);
             console.error(e);
             await doAddon(3, e); // on client side error
         }

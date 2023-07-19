@@ -1,0 +1,1 @@
+Hello, world! You can edit /assets/myFile.txt to update this page instantly!

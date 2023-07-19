@@ -46,6 +46,13 @@ export const args: Record<string, string | boolean>;
 
 export function resolvePath(path: string): string;
 
+export function fetch(url: RequestInfo | URL, init?: RequestInit & {
+    json?: boolean
+}): Promise<string>;
+export function fetch(url: RequestInfo | URL, init?: RequestInit & {
+    json: true
+}): Promise<Object>;
+
 export {
     useCallback,
     useContext,
