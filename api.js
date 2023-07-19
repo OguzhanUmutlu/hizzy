@@ -772,6 +772,7 @@ class API extends EventEmitter {
             return res.send(req._RouteJSON + "\u0000" + cPages);
         }
         this.#hashes[req._uuid] = r;
+        await this.#getPagePacket(file, code, req, res);
         await this.sendRawFile(".html", `<script data-rm=${r} type=module>${jsxInjection
             .replace("$$R$$", r)
             .replace("$$R$$", r)
@@ -779,8 +780,8 @@ class API extends EventEmitter {
             .replace("$$R$$", r) // it's important that it's ran exactly 4 times!
             .replace("$$CONF$$",
                 `['${r}','${this.#buildRuntimeId || runtimeId}',${this.#builtAt},` +
-                `${config.keepaliveTimeout > 0 ? config.clientKeepalive : -1},${req._RouteJSON},` +
-                `${await this.#getPagePacket(file, code, req, res)},${this.dev ? 1 : 0},` +
+                `${config.keepaliveTimeout > 0 ? config.clientKeepalive : -1}` +
+                `,${this.dev ? 1 : 0},` +
                 `'${experimentalId}',${staticJSON}]`
             )
         }</script>`, req, res);

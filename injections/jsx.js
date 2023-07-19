@@ -13,7 +13,7 @@
     Object.freeze(window._eval_);
 })();
 (async () => {
-    const [R, R2, T, TIMEOUT, mainFileI, filesI, DEV, EXP, STATIC] = $$CONF$$;
+    const [R, R2, T, TIMEOUT, DEV, EXP, STATIC] = $$CONF$$;
     const {CLIENT2SERVER, SERVER2CLIENT} = {
         CLIENT2SERVER: {
             HANDSHAKE_RESPONSE: "0", // agreed on shaking the hand
@@ -122,8 +122,8 @@
     sendToSocket(CLIENT2SERVER.HANDSHAKE_RESPONSE);
 
     ///
-    let mainFile = mainFileI;
-    let files = filesI;
+    let mainFile = null;
+    let files = null;
     let exports = {};
     let hasExported = [];
     let fetchCache = {};
@@ -314,6 +314,7 @@
         p = pathJoin(p, location.pathname.split("/").slice(1, -1));
         const actual = p.split("#")[0].split("?")[0];
         d.cookie = "__hizzy__=" + key;
+        console.log(key)
         if (pageCache[actual]) {
             const page = pageCache[actual];
             mainFile = page.mainFile;
@@ -386,7 +387,6 @@
         await doAddon(2); // on client side rendered
         onRender();
     };
-// LOADING THE ACTUAL PAGE:
-    await loadPage(mainFile);
-})
-();
+    // LOADING THE ACTUAL PAGE:
+    await fetchPage(location.pathname, false);
+})();
