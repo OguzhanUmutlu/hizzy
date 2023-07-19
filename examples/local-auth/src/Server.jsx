@@ -14,8 +14,4 @@ export default <Routes>
         onRequest={auth.unrequired("/")}
         allow={["App.css"]}
     />
-    <Route
-        path="/qwe"
-        onRequest={(req, res) => res.send("test")}
-    />
 </Routes>;

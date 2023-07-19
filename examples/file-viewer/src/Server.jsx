@@ -1,5 +1,5 @@
 Hizzy.watchFile("../assets/myFile.txt");
 
 export default <Routes>
-    <Route path="/qwe" route="./App.jsx"/>
+    <Route path="/" route="./App.jsx"/>
 </Routes>;
