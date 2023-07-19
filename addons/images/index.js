@@ -55,7 +55,7 @@ module.exports = class ImagePlusAddon extends AddonModule {
                     if (!buff) return;
                     Hizzy.sendRawFile(file, buff, req, res, true);
                 } catch (e) {
-                    console.log(e)
+                    printer.dev.error(e)
                     res.json({error: "Internal server error"});
                 }
             }

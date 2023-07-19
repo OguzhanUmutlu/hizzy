@@ -633,14 +633,14 @@ class API extends EventEmitter {
                             return close("invalid json");
                         }
                         if (typeof args !== "object" || !Array.isArray(args)) return close("invalid function args");
-                        const res = await Function("currentUUID", "currentClient", "...args", `${beginCode[page]};${fn.code};return ${fnName}(...args)`)(uuid, client, ...args);
+                        const res = await Function("currentUUID", "currentClient", "...args", `${beginCode[page]};${fn.code};return ${fn.name}(...args)`)(uuid, client, ...args);
                         if (fn.r) {
                             let r;
                             try {
                                 r = JSON.stringify(res);
                             } catch (e) {
                                 r = "undefined";
-                                printer.dev.fail("Couldn't stringify the response from the '@server/respond -> " + fnName + "' function at '/" + socket._URL_ + "'.");
+                                printer.dev.fail("Couldn't stringify the response from the '@server/respond -> " + fn.name + "' function at '/" + socket._URL_ + "'.");
                                 printer.dev.error(e);
                             }
                             socket._send(SERVER2CLIENT.SERVER_FUNCTION_RESPONSE + evalId + ":" + r);
@@ -1407,7 +1407,7 @@ class API extends EventEmitter {
         }
         this.app.get("*", (req, res) => this.#staticRender(req, res));
     };
-
+    // todo: maybe add an ability to set the connection timeout time for requests, like if it's far away increase it etc.
     async readClientJSX(file, jsxCode) {
         if (file === config.main) return {
             code: `throw "Cannot access the main file.";`,
@@ -1442,14 +1442,15 @@ class API extends EventEmitter {
                 for (const line of lines) {
                     const t = line.replaceAll("*", "").trim();
                     if (["@server", "@server/respond"].includes(t)) {
-                        replaceText({start, end}, `const ${name}=FN${runtimeId}("${name}");`);
-                        if (t === "@server") serverFunctions[name] = {r: false, code, start, end};
-                        else serverFunctions[name] = {r: true, code, start, end};
+                        const tempName = random();
+                        replaceText({start, end}, `const ${name}=FN${runtimeId}("${tempName}");`);
+                        if (t === "@server") serverFunctions[tempName] = {name, r: false, code, start, end};
+                        else serverFunctions[tempName] = {name, r: true, code, start, end};
                     } else if (["@server/start", "@server/join", "@server/leave"].includes(t)) {
                         replaceText({start, end}, "");
-                        if (t === "@server/start") serverInit.push({name, code, start, end});
-                        else if (t === "@server/join") joinEvent.push({name, code, start, end});
-                        else leaveEvent.push({name, code, start, end});
+                        if (t === "@server/start") serverInit.push({name: name, code, start, end});
+                        else if (t === "@server/join") joinEvent.push({name: name, code, start, end});
+                        else leaveEvent.push({name: name, code, start, end});
                     } else if (t === "@client/render") {
                         clientLoadFunctionList.push(name);
                         clientFunctionList.push(name);

@@ -281,7 +281,6 @@
     };
 // todo: client can create workers, they should be terminated before a navigation, also assignments to `window` or any other global variable stay
     const addonExports = {};
-// BEFORE LOAD:
     const doAddon = async (index, ...a) => {
         for (let i = 0; i < ADDONS.length; i++) {
             const addon = ADDONS[i];
@@ -314,7 +313,6 @@
         p = pathJoin(p, location.pathname.split("/").slice(1, -1));
         const actual = p.split("#")[0].split("?")[0];
         d.cookie = "__hizzy__=" + key;
-        console.log(key)
         if (pageCache[actual]) {
             const page = pageCache[actual];
             mainFile = page.mainFile;
