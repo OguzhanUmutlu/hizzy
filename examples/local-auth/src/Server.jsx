@@ -1,4 +1,5 @@
 import Auth from "@hizzyjs/authentication";
+
 global.auth = new Auth.LocalAuthentication;
 
 export default <Routes>

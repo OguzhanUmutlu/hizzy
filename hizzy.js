@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
+const random = () => crypto.getRandomValues(new Uint32Array([0]))[0].toString(36); // todo: maybe get back to BigUint64?
+
 const self = module.exports = {};
+self.defineConfig = r => r;
 const sT = Date.now();
 global.__sT__ = sT;
 global.__PRODUCT__ = "hizzy";
@@ -10,6 +13,7 @@ const fs = require("fs");
 const dotenv = require("dotenv");
 const path = require("path");
 const os = require("os");
+const url = require("url");
 const {argv} = process;
 require("fancy-printer").makeGlobal(true);
 dotenv.config();
@@ -59,6 +63,7 @@ const checkDefault = (obj, def = {}, l = []) => {
         if (typeof obj[key] === "undefined") {
             obj[key] = def[key];
             changed.push([...l, key]);
+            continue;
         }
         if (obj[key].constructor === Object && key !== "addons" && key !== "static") {
             const c = checkDefault(obj[key], def[key], [...l, key]);
@@ -181,9 +186,6 @@ if (isTerminal && args[0]) {
 }
 
 (async () => {
-    const confPath = path.join(dir, _argv_.config ? _argv_.config : __PRODUCT__ + ".json");
-    const confExists = fs.existsSync(confPath);
-
     /*async function askLine(
         lineInitial,
         lineWriting,
@@ -222,6 +224,14 @@ if (isTerminal && args[0]) {
         process.exit();
     }*/
 
+    const mainPkgPath = path.join(dir, "package.json");
+    if (!fs.existsSync(mainPkgPath)) {
+        if (_argv_.debug) printer.dev.debug("Creating the %c/package.json&t file...", "color: orange");
+        fs.writeFileSync(mainPkgPath, JSON.stringify({
+            name: path.basename(dir),
+            type: "module"
+        }, null, 2));
+    }
     const DEFAULT_CONFIG = {
         "dev": true,
         "port": -1,
@@ -250,29 +260,68 @@ if (isTerminal && args[0]) {
         }*/
         // todo: fix cache, it repeatedly refreshes the page for some reason, *sometimes*
     };
+    let confFileName = _argv_.config;
+    if (confFileName && !fs.existsSync(path.join(dir, confFileName))) return exit("Config file %c" + confFileName + "&t given in the command line arguments is invalid:", "color: orange");
+    if (!confFileName) for (const a of ["json", "config.json", "config.ts", "config.js"]) {
+        confFileName = __PRODUCT__ + "." + a;
+        if (fs.existsSync(path.join(dir, confFileName))) break;
+    }
+    const confPath = path.join(dir, confFileName);
+    const confExists = fs.existsSync(confPath);
     if (!confExists || !fs.statSync(confPath).isFile()) {
         if (confExists) fs.rmSync(confPath);
-        if (_argv_.debug) printer.dev.debug("Creating the %c/" + __PRODUCT__ + ".json&t file...", "color: orange");
-        fs.writeFileSync(confPath, JSON.stringify(DEFAULT_CONFIG, null, 2));
+        if (_argv_.debug) printer.dev.debug("Creating the %c/" + confFileName + "&t file...", "color: orange");
+        fs.writeFileSync(confPath, `import {defineConfig} from "hizzy";
+
+export default defineConfig({
+    port: 1881
+});`);
     }
-    let conf = {};
-    try {
-        conf = JSON.parse(fs.readFileSync(confPath, "utf8"));
-    } catch (e) {
-        return exit("Invalid JSON in the file %c'" + confPath + "'%c: %c" + e.toString() + "%c.", "color: orange", "color: red", "color: orange", "color: red");
+    let conf;
+    // noinspection JSValidateTypes
+    global[__PRODUCT_U__] = {defineConfig: r => r};
+    if (confFileName.endsWith(".json")) {
+        try {
+            conf = JSON.parse(fs.readFileSync(confPath, "utf8"));
+        } catch (e) {
+            return exit("Invalid JSON in the file %c'" + confPath + "'%c: %c" + e.toString() + "%c.", "color: orange", "color: red", "color: orange", "color: red");
+        }
+    } else if (confFileName.endsWith(".js")) {
+        conf = (await import(url.pathToFileURL(confPath))).default;
+    } else if (confFileName.endsWith(".ts")) {
+        const filePath = path.join(path.dirname(confPath), random() + ".js");
+        try {
+            fs.writeFileSync(filePath, require("@babel/core").transformSync(fs.readFileSync(confPath), {
+                filename: path.basename(confPath),
+                presets: [require("@babel/preset-typescript")]
+            }).code);
+        } catch (e) {
+            throw e;
+        }
+        try {
+            conf = (await import(url.pathToFileURL(confPath))).default;
+        } finally {
+            fs.rmSync(filePath);
+        }
     }
     const ch = conf.checkConfig;
     const changedKeys = checkDefault(conf, DEFAULT_CONFIG);
-    if (!_argv_.build && changedKeys.length && ch) {
+    if (!_argv_.build && changedKeys.length && ch && confFileName.endsWith(".json")) {
         fs.writeFileSync(confPath, JSON.stringify(conf, null, 2));
         printer.dev.warn("Updated following properties in " + __PRODUCT__ + ".json: " + changedKeys.map(i => i.join("->")).join(", "));
     }
     if (!Array.isArray(conf.extensionRemovals)) conf.extensionRemovals = DEFAULT_CONFIG.extensionRemovals;
     conf.extensionRemovals = [...new Set(conf.extensionRemovals)];
     if (conf.keepaliveTimeout !== -1 && conf.clientKeepalive >= conf.keepaliveTimeout) return exit("Config's 'clientKeepalive' property has to be smaller than 'keepaliveTimeout'.");
+    if (Array.isArray(conf.static)) {
+        const arr = conf.static;
+        conf.static = {};
+        for (const i of arr) conf.static[i] = i;
+    }
     conf.cache = {}; // TODO: REMOVE THIS AFTER ADDING IT BACK!
     Object.freeze(conf);
     self.config = conf;
+
     if (!_argv_.debug) {
         printer.options.disabledTags.push("debug");
         printer.dev.options.disabledTags.push("debug");

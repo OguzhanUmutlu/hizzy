@@ -27,6 +27,27 @@ type Shortcut = {
     run: () => void
 };
 
+type HizzyConfiguration = {
+    dev?: boolean
+    port?: number
+    fileRefresh?: boolean
+    autoBuild?: boolean
+    listen?: boolean
+    main?: string
+    mainModule?: boolean
+    checkConfig?: boolean
+    realtime?: boolean
+    https?: boolean
+    srcFolder?: string
+    connectionTimeout?: number
+    keepaliveTimeout?: number
+    clientKeepalive?: number
+    minClientKeepalive?: number
+    includeOriginalInBuild?: boolean
+    addons?: Record<string, Object> | string[] | [string, Object][]; // todo: maybe intellisense for addon options, located in the addons' own d.ts files as a type?
+    static?: Record<string, string> | string[]
+};
+
 declare class AddonModule {
     get name(): string;
 
@@ -178,6 +199,8 @@ declare class APIClass {
     };
 
     watchFile(file: string): void;
+
+    defineConfig(config: HizzyConfiguration): HizzyConfiguration;
 }
 
 declare global {

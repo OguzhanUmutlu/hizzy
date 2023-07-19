@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "dependencies": {
     "@hizzyjs/authentication": "^1.0.0"
   }

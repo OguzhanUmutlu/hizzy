@@ -1,5 +1,7 @@
 // noinspection JSUnusedGlobalSymbols,ExceptionCaughtLocallyJS,JSPotentiallyInvalidConstructorUsage
 
+const random = () => crypto.getRandomValues(new Uint32Array([0]))[0].toString(36); // todo: maybe get back to BigUint64?
+
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
@@ -55,8 +57,11 @@ const staticJSON = JSON.stringify(config?.static);
 // todo: a playground in the web page, update: idk if i will do this, this requires a sandbox server, i might use something like repl.it or glitch.com
 // todo: cache file contents for the production mode
 // todo: variable transaction? like @server for variables? wouldn't work with literals. not sure if it's a good idea. they could just use currentClient.eval("variable") ? not sure if this works
+// todo: addon api for the socket messages etc.
 
-const random = () => crypto.getRandomValues(new Uint32Array([0]))[0].toString(36); // maybe get back to BigUint64?
+
+// todo: test it on mac and linux
+
 const runtimeId = random();
 const EVERYONE = f => {
     if (!f["__FUNCTION__"]) throw new Error("EVERYONE function only allows client-sided functions!");
@@ -1729,6 +1734,10 @@ class API extends EventEmitter {
         };
         const delete_ = () => this.#globalStates.delete(key);
         return {get, set, delete: delete_};
+    };
+
+    defineConfig(r) {
+        return r;
     };
 }
 

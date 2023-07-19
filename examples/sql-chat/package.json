@@ -1,14 +1,5 @@
 {
-  "name": "sql-chat",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "type": "module",
   "dependencies": {
     "@hizzyjs/database": "^1.0.2"
   }
