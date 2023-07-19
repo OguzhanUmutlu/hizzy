@@ -26,6 +26,7 @@ import {
     toChildArray
 } from "preact";
 import {Inputs} from "preact/hooks";
+import {HizzyConfiguration as Conf} from "./api";
 
 export function openPage(url: string): void;
 
@@ -52,6 +53,8 @@ export function fetch(url: RequestInfo | URL, init?: RequestInit & {
 export function fetch(url: RequestInfo | URL, init?: RequestInit & {
     json: true
 }): Promise<Object>;
+
+export {Conf as UserConfig};
 
 export {
     useCallback,

@@ -46,7 +46,15 @@ type HizzyConfiguration = {
     includeOriginalInBuild?: boolean
     addons?: Record<string, Object> | string[] | [string, Object][]; // todo: maybe intellisense for addon options, located in the addons' own d.ts files as a type?
     static?: Record<string, string> | string[]
+    cache?: {
+        "addons"?: number,
+        "npm"?: number,
+        "preact"?: number,
+        "preact-hooks"?: number,
+        "static"?: Record<string, number>
+    }
 };
+type DefineConfigFunction<T> = (config: T) => T;
 
 declare class AddonModule {
     get name(): string;
@@ -200,7 +208,11 @@ declare class APIClass {
 
     watchFile(file: string): void;
 
-    defineConfig(config: HizzyConfiguration): HizzyConfiguration;
+    defineConfig: DefineConfigFunction<HizzyConfiguration> |
+        DefineConfigFunction<(options: {
+            argv: Record<string, string>,
+            isDev: boolean
+        }) => Promise<HizzyConfiguration>>;
 }
 
 declare global {
@@ -218,5 +230,7 @@ declare global {
         everyone: (...args: SocketTraveler[]) => Record<string, SocketTraveler>;
     }
 }
+
+export {HizzyConfiguration};
 
 export default APIClass;

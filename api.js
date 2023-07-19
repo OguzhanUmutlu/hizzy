@@ -1359,25 +1359,11 @@ class API extends EventEmitter {
         Hizzy.Route = global.Route = () => React("div", null);
         let mainResponse;
         const tDir = path.dirname(path.join(this.#dir, config.srcFolder, config.main));
-        const tPath = path.join(tDir, "t" + random() + "--" + path.basename(config.main) + "--.js");
-        const tPkgPath = path.join(tDir, "package.json");
-        let pkgN;
+        const tPath = path.join(tDir, "t" + random() + "--" + path.basename(config.main) + "--." + (config.mainModule ? "m" : "") + "js");
         const rmf = () => {
             if (fs.existsSync(tPath)) fs.rmSync(tPath, {recursive: true});
-            if (pkgN !== false) {
-                if (pkgN) fs.writeFileSync(tPkgPath, pkgN);
-                else fs.rmSync(tPkgPath, {recursive: true});
-            }
         };
         try {
-            if (fs.existsSync(tPkgPath)) {
-                const p = JSON.parse(pkgN = fs.readFileSync(tPkgPath, "utf8"));
-                if ((p.type === "module") !== config.mainModule) {
-                    if (config.mainModule) p.type = "module";
-                    else delete p.type;
-                    fs.writeFileSync(tPkgPath, JSON.stringify(p));
-                } else pkgN = false;
-            } else fs.writeFileSync(tPkgPath, config.mainModule ? `{"type":"module"}` : "{}")
             fs.writeFileSync(tPath, data);
             mainResponse = await import(url.pathToFileURL(tPath));
             // if(config.mainModule) mainResponse = await import("data:application/javascript;base64," + Buffer.from(data.toString()).toString("base64"));

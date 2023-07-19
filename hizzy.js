@@ -224,14 +224,6 @@ if (isTerminal && args[0]) {
         process.exit();
     }*/
 
-    const mainPkgPath = path.join(dir, "package.json");
-    if (!fs.existsSync(mainPkgPath)) {
-        if (_argv_.debug) printer.dev.debug("Creating the %c/package.json&t file...", "color: orange");
-        fs.writeFileSync(mainPkgPath, JSON.stringify({
-            name: path.basename(dir),
-            type: "module"
-        }, null, 2));
-    }
     const DEFAULT_CONFIG = {
         "dev": true,
         "port": -1,
@@ -262,7 +254,7 @@ if (isTerminal && args[0]) {
     };
     let confFileName = _argv_.config;
     if (confFileName && !fs.existsSync(path.join(dir, confFileName))) return exit("Config file %c" + confFileName + "&t given in the command line arguments is invalid:", "color: orange");
-    if (!confFileName) for (const a of ["json", "config.json", "config.ts", "config.js"]) {
+    if (!confFileName) for (const a of ["json", "config.json", "config.ts", "config.js", "config.mts", "config.mjs"]) {
         confFileName = __PRODUCT__ + "." + a;
         if (fs.existsSync(path.join(dir, confFileName))) break;
     }
@@ -278,32 +270,31 @@ export default defineConfig({
 });`);
     }
     let conf;
-    // noinspection JSValidateTypes
-    global[__PRODUCT_U__] = {defineConfig: r => r};
     if (confFileName.endsWith(".json")) {
         try {
             conf = JSON.parse(fs.readFileSync(confPath, "utf8"));
         } catch (e) {
             return exit("Invalid JSON in the file %c'" + confPath + "'%c: %c" + e.toString() + "%c.", "color: orange", "color: red", "color: orange", "color: red");
         }
-    } else if (confFileName.endsWith(".js")) {
-        conf = (await import(url.pathToFileURL(confPath))).default;
-    } else if (confFileName.endsWith(".ts")) {
-        const filePath = path.join(path.dirname(confPath), random() + ".js");
-        try {
+    } else if (confFileName.endsWith(".js") || confFileName.endsWith(".mjs") || confFileName.endsWith(".ts") || confFileName.endsWith(".mts")) {
+        // noinspection JSValidateTypes
+        global[__PRODUCT_U__] = {defineConfig: r => r};
+        if (confFileName.endsWith(".js") || confFileName.endsWith(".mjs")) {
+            conf = (await import(url.pathToFileURL(confPath))).default;
+        } else {
+            const filePath = path.join(path.dirname(confPath), random() + "." + (confFileName.endsWith(".mjs") ? "m" : "") + "js");
             fs.writeFileSync(filePath, require("@babel/core").transformSync(fs.readFileSync(confPath), {
                 filename: path.basename(confPath),
                 presets: [require("@babel/preset-typescript")]
             }).code);
-        } catch (e) {
-            throw e;
-        }
-        try {
-            conf = (await import(url.pathToFileURL(confPath))).default;
-        } finally {
-            fs.rmSync(filePath);
+            try {
+                conf = (await import(url.pathToFileURL(confPath))).default;
+            } finally {
+                fs.rmSync(filePath);
+            }
         }
     }
+    if (typeof conf === "function") await conf({argv: _argv_, isDev: _argv_.dev});
     const ch = conf.checkConfig;
     const changedKeys = checkDefault(conf, DEFAULT_CONFIG);
     if (!_argv_.build && changedKeys.length && ch && confFileName.endsWith(".json")) {
