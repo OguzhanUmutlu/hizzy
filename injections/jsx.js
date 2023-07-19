@@ -1,18 +1,6 @@
 // noinspection TypeScriptUMDGlobal
 
 (async () => {
-    Object.defineProperty(window, "_eval_", {
-        get: () => (..._$$R$$) => { // runs with arguments
-            // const ____________ = _$$R$$;
-            // console.log(____________[0]);
-            // return eval(____________[0]);
-            return eval(_$$R$$[0]);
-        }
-    });
-    Object.freeze(window.eval);
-    Object.freeze(window._eval_);
-})();
-(async () => {
     const [R, R2, T, TIMEOUT, DEV, EXP, STATIC] = $$CONF$$;
     const {CLIENT2SERVER, SERVER2CLIENT} = {
         CLIENT2SERVER: {
@@ -114,12 +102,14 @@
     let _evalId = 0;
     const evalResponses = {};
     const runCode = (code, args = [], async = false) => {
-        return _eval_("(" + (async ? "async" : "") + "()=>{" + `${args.map((i, j) => `const ${i[0]}=_${R}[${j + 1}];`).join("")}${code}` + "})", ...args.map(i => i[1]))();
+        return Function(...args.map(i => i[0]), (async ? "return (async()=>{" : "") + code + (async ? "})()" : ""))(...args.map(i => i[1]));
     };
     const runModuleCode = code => import(URL.createObjectURL(new Blob([code], {type: "application/javascript"})));
     await handshookPromise;
     await loadPromise;
     sendToSocket(CLIENT2SERVER.HANDSHAKE_RESPONSE);
+
+    // todo: put nearly everything in an iframe and communicate with postMessage and the R(randomx) variable
 
     ///
     let mainFile = null;
@@ -136,7 +126,7 @@
     if (!__react) location.reload();
     const react = __react;
     Object.assign(Hizzy, __react, __hooks);
-    const ADDONS = await (await fetch("/__hizzy__addons__")).json();
+    const ADDONS = await (await fetch("/__hizzy__addons__?" + R2)).json();
     d.cookie = "__hizzy__=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     const pathJoin = (f, cd = mainFile.split("/").slice(0, -1)) => {
         const p = [...cd];
@@ -239,7 +229,7 @@
                 if (isRaw) return {default: content, content};
                 return urlExport(f);
             } else if (["html", "css", "js"].includes(fExt)) {
-                const url = "http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__import__/" + path);
+                const url = "http" + (isSecure ? "s" : "") + "://" + location.host + "/" + (relativeP ? path : "__hizzy__npm__/" + path);
                 d.cookie = "__hizzy__=" + key;
                 let a;
                 if (isRaw) {
@@ -257,16 +247,26 @@
             }
         }
         if (isRaw) throw new Error("Cannot use the '?raw' on JSX/TSX files!");
-        const getting = {load: {}, normal: {}};
-        await runCode(file.code + `${file.client.map(i => `__hizzy_get${R}__.normal.${i}=typeof ${i}!="undefined"?${i}:void 0;`).join("")}${file.clientLoad.map(i => `__hizzy_get${R}__.load.${i}=${i};`).join("")}`, [
-            ["R" + R2, (...a) => react.createElement(...a)],
-            ["F" + R2, (...a) => react.Fragment(...a)],
-            ["H" + R2, Hizzy],
-            ["currentWebSocket", WebSocket],
-            ["FN" + R2, s => (...a) => runServerFunction(fName, s, a)],
-            ...(f === mainFile ? [["__hizzy_get" + R + "__", getting]] : []),
-            ...extra
-        ], true);
+        const getting = {normal: {}, load: {}, end: {}};
+        await runCode(
+            file.code + ";" +
+            [["client", "normal"], ["clientLoad", "load"], ["clientEnd", "end"]].map(j =>
+                file[j[0]].map(i => `__hizzy_get${R}__.${j[1]}.${i}=typeof ${i}!="undefined"&&${i};`).join("")
+            ).join(""),
+            [
+                ["R" + R2, (...a) => react.createElement(...a)],
+                ["F" + R2, (...a) => react.Fragment(...a)],
+                ["H" + R2, Hizzy],
+                ["currentWebSocket", WebSocket],
+                ["FN" + R2, s => (...a) => runServerFunction(fName, s, a)],
+                ...(f === mainFile ? [["__hizzy_get" + R + "__", getting]] : []),
+                /*...(f === mainFile ? [
+                    ["U" + R2, getting.normal],
+                    ["UR" + R2, getting.load],
+                    ["UE" + R2, getting.end]
+                ] : []),*/
+                ...extra
+            ], true);
         clientFunctions[fName] = getting;
         hasExported.push(fName);
         return exports[fName];
@@ -279,7 +279,7 @@
         sendToSocket(CLIENT2SERVER.SERVER_FUNCTION_REQUEST + "" + id + ":" + page + ":" + func + ":" + JSON.stringify(args));
         if (files[page].respondFunctions.includes(func)) return new Promise(r => evalResponses[id] = r);
     };
-// todo: client can create workers, they should be terminated before a navigation, also assignments to `window` or any other global variable stay
+    // todo: client can create workers, they should be terminated before a navigation, also assignments to `window` or any other global variable stay
     const addonExports = {};
     const doAddon = async (index, ...a) => {
         for (let i = 0; i < ADDONS.length; i++) {
@@ -360,8 +360,11 @@
     addEventListener("popstate", async e => {
         await fetchPage(e.state["__hizzy" + R + "__"], false);
     });
+    let oldEnds = {};
     const loadPage = async file => {
         if (!firstRender) renderPromise = new Promise(r => onRender = r);
+        Object.values(oldEnds).forEach(i => i());
+        oldEnds = {};
         firstRender = false;
         d.documentElement.innerHTML = "";
         for (const t of timeouts) clearTimeout(t);
@@ -374,6 +377,7 @@
                 if (def.__v) {
                     react.render(def, d.body);
                     const l = clientFunctions[file].load;
+                    oldEnds = clientFunctions[file].end;
                     for (const i in l) l[i]();
                 }
             }

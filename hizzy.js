@@ -240,7 +240,15 @@ if (isTerminal && args[0]) {
         "clientKeepalive": 20000,
         "minClientKeepalive": 8000,
         "addons": [],
-        "includeOriginalInBuild": true
+        "includeOriginalInBuild": true,
+        /*"cache": {
+            "addons": 31536000,
+            "npm": 31536000,
+            "preact": 31536000,
+            "preact-hooks": 31536000,
+            "static": {}
+        }*/
+        // todo: fix cache, it repeatedly refreshes the page for some reason, *sometimes*
     };
     if (!confExists || !fs.statSync(confPath).isFile()) {
         if (confExists) fs.rmSync(confPath);
@@ -262,6 +270,7 @@ if (isTerminal && args[0]) {
     if (!Array.isArray(conf.extensionRemovals)) conf.extensionRemovals = DEFAULT_CONFIG.extensionRemovals;
     conf.extensionRemovals = [...new Set(conf.extensionRemovals)];
     if (conf.keepaliveTimeout !== -1 && conf.clientKeepalive >= conf.keepaliveTimeout) return exit("Config's 'clientKeepalive' property has to be smaller than 'keepaliveTimeout'.");
+    conf.cache = {}; // TODO: REMOVE THIS AFTER ADDING IT BACK!
     Object.freeze(conf);
     self.config = conf;
     if (!_argv_.debug) {

@@ -368,6 +368,7 @@ class API extends EventEmitter {
     preRawSend = [];
     buildHandlers = {};
     scanHandlers = {};
+    functionDecorators = {};
 
     constructor(dir) {
         if (API.API) return API.API;
@@ -398,12 +399,14 @@ class API extends EventEmitter {
             if (socket && l === `__${__PRODUCT__}__addons__`) {
                 const run = req.url.split("?")[1];
                 if (run !== runtimeId) return res.redirect("/__" + __PRODUCT__ + "__addons__?" + runtimeId);
-                //res.setHeader("Cache-Control", "max-age=31536000,immutable");
+                const cache = config.cache["addons"] * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
                 await this.sendRawFile(".json", this.#addonCache, req, res);
                 return;
             }
-            if (socket && l.includes("/") && l.split("/")[0] === `__${__PRODUCT__}__import__`) {
-                res.setHeader("Cache-Control", "max-age=31536000,immutable");
+            if (socket && l.includes("/") && l.split("/")[0] === `__${__PRODUCT__}__npm__`) {
+                const cache = config.cache["import"] * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
                 const name = l.split("/")[1];
                 if (!name) return;
                 const err = [];
@@ -419,14 +422,17 @@ class API extends EventEmitter {
             if (socket && l === "__" + __PRODUCT__ + "__preact__") {
                 const run = req.url.split("?")[1];
                 if (run !== experimentalId) return;
-                //res.setHeader("Cache-Control", "max-age=31536000,immutable");
+                const cache = config.cache["preact"] * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
                 await this.sendRawFile(".js", preactCode, req, res);
                 return;
             }
             if (socket && l === "__" + __PRODUCT__ + "__preact__hooks__") {
                 const run = req.url.split("?")[1];
                 if (run !== experimentalId) return;
-                //res.setHeader("Cache-Control", "max-age=31536000,immutable");
+                // noinspection PointlessArithmeticExpressionJS
+                const cache = config.cache["preact-hooks"] * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
                 await this.sendRawFile(".js", preactHooksCode, req, res);
                 return;
             }
@@ -470,6 +476,40 @@ class API extends EventEmitter {
             tsx: [sourceJSXHandler],
             __default__: [(file, data) => this.#buildCache[file] = data]
         };
+
+        this.functionDecorators["@server"] = ({name, start, end, replaceText, json, code}) => {
+            const tempName = random();
+            replaceText({start, end}, `const ${name}=FN${runtimeId}("${tempName}");`);
+            json.serverFunctions[tempName] = {name, r: false, code, start, end};
+        };
+        this.functionDecorators["@server/respond"] = ({name, start, end, replaceText, json, code}) => {
+            const tempName = random();
+            replaceText({start, end}, `const ${name}=FN${runtimeId}("${tempName}");`);
+            json.serverFunctions[tempName] = {name, r: true, code, start, end};
+        };
+        this.functionDecorators["@server/start"] = ({name, start, end, replaceText, json, code}) => {
+            replaceText({start, end}, "");
+            json.serverInit.push({name, code, start, end});
+        };
+        this.functionDecorators["@server/join"] = ({name, start, end, replaceText, json, code}) => {
+            replaceText({start, end}, "");
+            json.joinEvent.push({name, code, start, end});
+        };
+        this.functionDecorators["@server/leave"] = ({name, start, end, replaceText, json, code}) => {
+            replaceText({start, end}, "");
+            json.leaveEvent.push({name, code, start, end});
+        };
+        this.functionDecorators["@client/render"] = ({name, json}) => {
+            // replaceText({start: end, end}, `;UR${runtimeId}.${name}=${name};`);
+            json.clientLoadList.push(name);
+        };
+        this.functionDecorators["@client/end"] = ({name, json}) => {
+            // replaceText({start: end, end}, `;UE${runtimeId}.${name}=${name};`);
+            json.clientEndList.push(name);
+        }; // todo: how will the server function know which client function to pick and run 🤔 leaving it as "running the most top level"
+        // I COULD add a function like, renameVariableInContext which would rename all names for the variable in the context
+        // what i mean by context is like, the current function, but again if they reassign it... in like a function
+        // it would be hard to detect... not sure if i'm gonna add this, it would be great if someone could though!
     };
 
     findOptimalFile(file) {
@@ -713,7 +753,8 @@ class API extends EventEmitter {
                 functions: k.filter(i => !sr[i].r),
                 respondFunctions: k.filter(i => sr[i].r),
                 client: json.clientFunctionList,
-                clientLoad: json.clientLoadFunctionList
+                clientLoad: json.clientLoadList,
+                clientEnd: json.clientEndList
             }
         };
         pk[file] = files[file].pk;
@@ -868,7 +909,12 @@ class API extends EventEmitter {
             if (st && !l.startsWith(st)) continue;
             const rest = l.substring(st.length);
             const p = path.join(this.#dir, folder, rest);
-            if (fs.existsSync(p) && fs.statSync(p).isFile()) return this.sendFile(l, fs.readFileSync(p), req, res, false);
+            if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+                if (res.headersSent) return;
+                const cache = typeof config.cache.static === "object" ? config.cache.static[folder] * 1 : config.cache.static * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
+                return this.sendFile(l, fs.readFileSync(p), req, res, false);
+            }
         }
         return this.notFound(req, res);
     };
@@ -1407,26 +1453,32 @@ class API extends EventEmitter {
         }
         this.app.get("*", (req, res) => this.#staticRender(req, res));
     };
+
     // todo: maybe add an ability to set the connection timeout time for requests, like if it's far away increase it etc.
     async readClientJSX(file, jsxCode) {
         if (file === config.main) return {
             code: `throw "Cannot access the main file.";`,
             serverFunctions: {},
             clientFunctionList: [],
+            clientLoadList: [],
+            clientEndList: [],
             serverInit: [],
             joinEvent: [],
-            leaveEvent: [],
-            clientLoadFunctionList: []
+            leaveEvent: []
         };
         const jsCode = this.jsxToJS(jsxCode, path.extname(file));
         if (jsCode instanceof Error) throw jsCode;
         const ast = babelParser.parse(jsCode, {sourceType: "module"});
-        const serverFunctions = {};
-        const clientFunctionList = [];
-        const clientLoadFunctionList = [];
-        const serverInit = [];
-        const joinEvent = [];
-        const leaveEvent = [];
+
+        const json = {
+            serverFunctions: {},
+            clientFunctionList: [],
+            clientLoadList: [],
+            clientEndList: [],
+            serverInit: [],
+            joinEvent: [],
+            leaveEvent: []
+        };
         let newJSCode = jsCode;
         let deltaIndex = 0;
         const replaceText = ({start, end}, text) => {
@@ -1441,31 +1493,22 @@ class API extends EventEmitter {
                 const lines = comment.value.split("\n");
                 for (const line of lines) {
                     const t = line.replaceAll("*", "").trim();
-                    if (["@server", "@server/respond"].includes(t)) {
-                        const tempName = random();
-                        replaceText({start, end}, `const ${name}=FN${runtimeId}("${tempName}");`);
-                        if (t === "@server") serverFunctions[tempName] = {name, r: false, code, start, end};
-                        else serverFunctions[tempName] = {name, r: true, code, start, end};
-                    } else if (["@server/start", "@server/join", "@server/leave"].includes(t)) {
-                        replaceText({start, end}, "");
-                        if (t === "@server/start") serverInit.push({name: name, code, start, end});
-                        else if (t === "@server/join") joinEvent.push({name: name, code, start, end});
-                        else leaveEvent.push({name: name, code, start, end});
-                    } else if (t === "@client/render") {
-                        clientLoadFunctionList.push(name);
-                        clientFunctionList.push(name);
-                    } else continue;
-                    return;
+                    const fH = this.functionDecorators[t];
+                    if (fH) {
+                        if (t.startsWith("@client")) processFunction(start, end, [], name, code);
+                        return fH({start, end, name, leadingComments, code, json, replaceText});
+                    }
                 }
             }
-            clientFunctionList.push(name); // removed ` if (t === "@client")`
+            // replaceText({start: end, end}, ";U" + runtimeId + `.${name}=${name};`); read the t-odo in the init function
+            json.clientFunctionList.push(name);
         };
         traverse(ast, {
             FunctionDeclaration: ({node}) => {
                 const {leadingComments} = node;
                 if (!node.id) return;
                 if (leadingComments) processFunction(node.start, node.end, leadingComments, node.id.name, clip(node));
-                else clientFunctionList.push(node.id.name); // now every other function is a client function
+                else json.clientFunctionList.push(node.id.name); // now every other function is a client function
             },
             ImportDeclaration: ({node}) => {
                 if (node.type !== "ImportDeclaration") return;
@@ -1571,7 +1614,7 @@ class API extends EventEmitter {
                     const {init} = dec;
                     if (!["ArrowFunctionExpression", "FunctionExpression"].includes(init.type)) continue;
                     if (leadingComments) processFunction(dec.start - kind.length - 1, dec.end, leadingComments, dec.id.name, kind + " " + clip(dec));
-                    else clientFunctionList.push(dec.id.name);
+                    else json.clientFunctionList.push(dec.id.name);
                 }
             }
             /*
@@ -1589,15 +1632,8 @@ class API extends EventEmitter {
             keep_fnames: true
         });
         if (c.error) throw c.error;
-        return {
-            code: typeof c === "string" ? c : c.code,
-            serverFunctions,
-            clientFunctionList,
-            serverInit,
-            joinEvent,
-            leaveEvent,
-            clientLoadFunctionList
-        };
+        json.code = typeof c === "string" ? c : c.code;
+        return json;
     };
 
     async waitBuild() {
