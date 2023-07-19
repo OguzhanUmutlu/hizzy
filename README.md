@@ -7,13 +7,11 @@ Hizzy is a React based modern web framework!
 
 # Installation
 
-To install Hizzy type this:
+To install Hizzy simply type this:
 
+```bash
+npx hizzy
 ```
-npm install -g hizzy
-```
-
-To run your app, simply type: `hizzy`!
 
 <!-- TOC -->
 * [Hizzy](#hizzy)
@@ -91,18 +89,18 @@ This addon adds these databases:
 
 This addon adds language support to your page!
 
-Check the [Language Support Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/language)
+Check the [Language Support Example on GitHub](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/language)
 
 ## @hizzyjs/authentication
 
 ### Local authentication
 
-Check the [Local Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/local-auth)
+Check the [Local Authentication Example on GitHub](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/local-auth)
 
 ### Discord authentication
 
 Check
-the [Discord Authentication Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
+the [Discord Authentication Example on GitHub](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/discord-auth)
 
 ## @hizzyjs/error-overlay
 
@@ -131,7 +129,7 @@ export default <>
 </>
 ```
 
-Check the [Helmet Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/helmet)
+Check the [Helmet Example on GitHub](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/helmet)
 
 ## @hizzyjs/images
 
@@ -140,7 +138,7 @@ image.
 
 This feature is not fully done.
 
-Check the [Images Example on Github](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/images)
+Check the [Images Example on GitHub](https://github.com/OguzhanUmutlu/hizzy/tree/main/examples/images)
 
 ## @hizzyjs/requests
 

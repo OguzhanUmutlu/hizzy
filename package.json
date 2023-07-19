@@ -1,13 +1,30 @@
 {
   "name": "hizzy",
   "description": "Hizzy is a React based modern web framework!",
-  "version": "0.0.31-beta",
+  "version": "0.0.32-beta",
   "main": "hizzy.min.js",
   "bin": {
     "hizzy": "./hizzy.min.js"
   },
   "repository": {
     "type": "git",
+    "url": "https://github.com/OguzhanUmutlu/hizzy"
+  },
+  "keywords": [
+    "framework",
+    "fullstack",
+    "frontend",
+    "backend",
+    "hizzy",
+    "development",
+    "fast",
+    "easy",
+    "simple",
+    "socket",
+    "jsx",
+    "tsx"
+  ],
+  "bugs": {
     "url": "https://github.com/OguzhanUmutlu/hizzy"
   },
   "license": "MIT",
