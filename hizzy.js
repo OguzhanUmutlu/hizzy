@@ -243,13 +243,13 @@ if (isTerminal && args[0]) {
         "minClientKeepalive": 8000,
         "addons": [],
         "includeOriginalInBuild": true,
-        /*"cache": {
-            "addons": 31536000,
-            "npm": 31536000,
-            "preact": 31536000,
-            "preact-hooks": 31536000,
+        "cache": {
+            "addons": 0,
+            "npm": 0,
+            "preact": 0,
+            "preact-hooks": 0,
             "static": {}
-        }*/
+        }
         // todo: fix cache, it repeatedly refreshes the page for some reason, *sometimes*
     };
     let confFileName = _argv_.config;
@@ -309,7 +309,6 @@ export default defineConfig({
         conf.static = {};
         for (const i of arr) conf.static[i] = i;
     }
-    conf.cache = {}; // TODO: REMOVE THIS AFTER ADDING IT BACK!
     Object.freeze(conf);
     self.config = conf;
 
