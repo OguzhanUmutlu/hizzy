@@ -262,9 +262,7 @@ if (isTerminal && args[0]) {
     if (!confExists || !fs.statSync(confPath).isFile()) {
         if (confExists) fs.rmSync(confPath);
         if (_argv_.debug) printer.dev.debug("Creating the %c/" + confFileName + "&t file...", "color: orange");
-        fs.writeFileSync(confPath, `export default Hizzy.defineConfig({
-    port: 1881
-});`);
+        fs.writeFileSync(confPath, `export default Hizzy.defineConfig({});`);
     }
     let conf;
     if (confFileName.endsWith(".json")) {
