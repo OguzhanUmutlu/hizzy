@@ -168,7 +168,7 @@ module.exports = class MyAddon extends AddonModule {
   "version": "1.0.0",
   "main": "index.js"
 }`);
-    printer.dev.pass("A new addon has been set up at: %c" + name, "color: orange");
+    printer.dev.pass("A new addon has been set up at '%c" + folder + "&t'!", "color: orange");
     process.exit();
 }
 if (!_argv_.build && !_argv_["no-clear"]) {
