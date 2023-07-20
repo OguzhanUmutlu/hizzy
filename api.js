@@ -504,6 +504,7 @@ class API extends EventEmitter {
             replaceText({start, end}, "");
             json.leaveEvent.push({name, code, start, end});
         };
+        this.functionDecorators["@client"] = r => r;
         this.functionDecorators["@client/render"] = ({name, json}) => {
             // replaceText({start: end, end}, `;UR${runtimeId}.${name}=${name};`);
             json.clientLoadList.push(name);
