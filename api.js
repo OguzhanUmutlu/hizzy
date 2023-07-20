@@ -198,6 +198,18 @@ class Client {
         return this.__socket._uuid;
     };
 
+    get ip() {
+        return this.__socket._req.ip;
+    };
+
+    get request() {
+        return this.__socket._req;
+    };
+
+    get actualRequest() {
+        return this.__socket._actualReq;
+    };
+
     async eval(code) {
         return await API.API.sendEvalTo(this.uuid, code);
     };
