@@ -30,7 +30,7 @@ const exit = (...msg) => {
 };
 process.on("exit", () => {
     if (global.Hizzy) {
-        const addons = Hizzy.getAddons();
+        const addons = Hizzy.getAddons && Hizzy.getAddons();
         for (const i in addons) addons[i].module.disable("termination");
     }
 });
@@ -135,7 +135,8 @@ const timeForm = ms => {
 
 const ck = "__" + __PRODUCT__ + "__";
 const jsOpt = {
-    mangle: {toplevel: false}
+    mangle: {toplevel: true},
+    module: true
 };
 const HIZZY_EXPERIMENTAL = process.argv.includes("--injections");
 let experimentalId = Date.now().toString(36);
@@ -451,6 +452,18 @@ class API extends EventEmitter {
                 const cache = config.cache["preact-hooks"] * 1;
                 if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
                 await this.sendRawFile(".js", preactHooksCode, req, res);
+                return;
+            }
+            if (this.#webUUIDs[uuid] && !socket && l === "__" + __PRODUCT__ + "__injection__html__") {
+                const cache = config.cache["htmlInjection"] * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
+                await this.sendRawFile(".js", `(async()=>{${htmlInjection}})()`, req, res);
+                return;
+            }
+            if (this.#webUUIDs[uuid] && !socket && l === "__" + __PRODUCT__ + "__injection__jsx__") {
+                const cache = config.cache["jsxInjection"] * 1;
+                if (cache && cache > 0) res.setHeader("Cache-Control", "max-age=" + cache);
+                await this.sendRawFile(".js", `(async()=>{${jsxInjection}})()`, req, res);
                 return;
             }
             const r = i => {
@@ -832,18 +845,13 @@ class API extends EventEmitter {
         }
         this.#hashes[req._uuid] = r;
         await this.#getPagePacket(file, code, req, res);
-        await this.sendRawFile(".html", `<script data-rm=${r} type=module>${jsxInjection
-            .replace("$$R$$", r)
-            .replace("$$R$$", r)
-            .replace("$$R$$", r)
-            .replace("$$R$$", r) // it's important that it's ran exactly 4 times!
-            .replace("$$CONF$$",
-                `['${r}','${this.#buildRuntimeId || runtimeId}',${this.#builtAt},` +
-                `${config.keepaliveTimeout > 0 ? config.clientKeepalive : -1}` +
-                `,${this.dev ? 1 : 0},` +
-                `'${experimentalId}',${staticJSON}]`
-            )
-        }</script>`, req, res);
+        const confJ = `['${r}','${this.#buildRuntimeId || runtimeId}',${this.#builtAt},` +
+            `${config.keepaliveTimeout > 0 ? config.clientKeepalive : -1}` +
+            `,${this.dev ? 1 : 0},` +
+            `'${experimentalId}',${staticJSON}]`;
+        await this.sendRawFile(".html",
+            `<script type=module data-rm=${r}>(async()=>{const $$CONF$$=${confJ};eval(await (await fetch("/__${__PRODUCT__}__injection__jsx__")).text())})()</script>`, req, res
+        );
     };
 
     async #getPagePacket(file, code, req, res) {
@@ -872,9 +880,10 @@ class API extends EventEmitter {
         this.prepLoad(req, res);
         const r = this.random();
         this.watchFile(req._Route);
-        await this.sendRawFile(".html", content + (this.#realtime ? `<script data-rm=${r}>` + htmlInjection
-            .replace("$R", r)
-            .replace("$T", config.keepaliveTimeout > 0 ? config.clientKeepalive : -1) + `</script>` : ""), req, res
+        const confJ = `['${r}',${config.keepaliveTimeout > 0 ? config.clientKeepalive : -1}]`;
+        await this.sendRawFile(".html", content + (this.#realtime ?
+            `<script type=module data-rm=${r}>(async()=>{const $$CONF$$=${confJ};eval(await (await fetch("/__${__PRODUCT__}__injection__html__")).text())})()</script>`
+            : ""), req, res
         );
     };
 
