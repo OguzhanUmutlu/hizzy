@@ -247,10 +247,10 @@
             }
         }
         if (isRaw) throw new Error("Cannot use the '?raw' on JSX/TSX files!");
-        const getting = {normal: {}, load: {}, end: {}};
+        const getting = {normal: {}, load: {}, navigate: {}};
         await runCode(
             file.code + ";" +
-            [["client", "normal"], ["clientLoad", "load"], ["clientEnd", "end"]].map(j =>
+            [["client", "normal"], ["clientLoad", "load"], ["clientNavigate", "navigate"]].map(j =>
                 file[j[0]].map(i => `__hizzy_get${R}__.${j[1]}.${i}=typeof ${i}!="undefined"&&${i};`).join("")
             ).join(""),
             [
@@ -263,7 +263,7 @@
                 /*...(f === mainFile ? [
                     ["U" + R2, getting.normal],
                     ["UR" + R2, getting.load],
-                    ["UE" + R2, getting.end]
+                    ["UE" + R2, getting.navigate]
                 ] : []),*/
                 ...extra
             ], true);
@@ -377,7 +377,7 @@
                 if (def.__v) {
                     react.render(def, d.body);
                     const l = clientFunctions[file].load;
-                    oldEnds = clientFunctions[file].end;
+                    oldEnds = clientFunctions[file].navigate;
                     for (const i in l) l[i]();
                 }
             }

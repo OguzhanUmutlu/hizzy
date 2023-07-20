@@ -509,9 +509,9 @@ class API extends EventEmitter {
             // replaceText({start: end, end}, `;UR${runtimeId}.${name}=${name};`);
             json.clientLoadList.push(name);
         };
-        this.functionDecorators["@client/end"] = ({name, json}) => {
+        this.functionDecorators["@client/navigate"] = ({name, json}) => {
             // replaceText({start: end, end}, `;UE${runtimeId}.${name}=${name};`);
-            json.clientEndList.push(name);
+            json.clientNavigateList.push(name);
         }; // todo: how will the server function know which client function to pick and run 🤔 leaving it as "running the most top level"
         // I COULD add a function like, renameVariableInContext which would rename all names for the variable in the context
         // what i mean by context is like, the current function, but again if they reassign it... in like a function
@@ -690,7 +690,7 @@ class API extends EventEmitter {
                                 printer.dev.error(e);
                             }
                             socket._send(SERVER2CLIENT.SERVER_FUNCTION_RESPONSE + evalId + ":" + r);
-                        }// else socket._send(SERVER2CLIENT.SERVER_FUNCTION_RESPONSE + evalId + ";undefined");
+                        }// else socket._send(SERVER2CLIENT.SERVER_FUNCTION_RESPONSE + evalId);
                     } else if (data[0] === CLIENT2SERVER.CLIENT_FUNCTION_RESPONSE) { // client-sided function response
                         if (!isJSX) return close("unauthorized");
                         const hasError = data[1] === "1";
@@ -760,7 +760,7 @@ class API extends EventEmitter {
                 respondFunctions: k.filter(i => sr[i].r),
                 client: json.clientFunctionList,
                 clientLoad: json.clientLoadList,
-                clientEnd: json.clientEndList
+                clientNavigate: json.clientNavigateList
             }
         };
         pk[file] = files[file].pk;
@@ -978,7 +978,7 @@ class API extends EventEmitter {
     async listen() {
         if (this.#listening) await new Promise(r => this.server.close(r));
         this.#listening = false;
-        let port_ = (argv.port || config.port) * 1;
+        let port_ = Math.floor((argv.port || config.port) * 1);
         if (port_ < 0) port_ = 0;
         this.#port = port_;
         await new Promise(r => this.server.listen(port_, () => r(true)));
@@ -1453,7 +1453,7 @@ class API extends EventEmitter {
             serverFunctions: {},
             clientFunctionList: [],
             clientLoadList: [],
-            clientEndList: [],
+            clientNavigateList: [],
             serverInit: [],
             joinEvent: [],
             leaveEvent: []
@@ -1466,7 +1466,7 @@ class API extends EventEmitter {
             serverFunctions: {},
             clientFunctionList: [],
             clientLoadList: [],
-            clientEndList: [],
+            clientNavigateList: [],
             serverInit: [],
             joinEvent: [],
             leaveEvent: []
@@ -1481,19 +1481,20 @@ class API extends EventEmitter {
         const clip = ({start, end}) => jsCode.substring(start, end);
         const fileJ = JSON.stringify(file);
         const processFunction = (start, end, leadingComments, name, code) => {
+            let isClient = true;
             for (const comment of leadingComments) {
                 const lines = comment.value.split("\n");
                 for (const line of lines) {
                     const t = line.replaceAll("*", "").trim();
                     const fH = this.functionDecorators[t];
                     if (fH) {
-                        if (t.startsWith("@client")) processFunction(start, end, [], name, code);
-                        return fH({start, end, name, leadingComments, code, json, replaceText});
+                        if (t.startsWith("@server")) isClient = false;
+                        fH({start, end, name, leadingComments, code, json, replaceText});
                     }
                 }
             }
             // replaceText({start: end, end}, ";U" + runtimeId + `.${name}=${name};`); read the t-odo in the init function
-            json.clientFunctionList.push(name);
+            if (isClient) json.clientFunctionList.push(name);
         };
         traverse(ast, {
             FunctionDeclaration: ({node}) => {
