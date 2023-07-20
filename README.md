@@ -2,6 +2,8 @@
 
 Hizzy is a React based fullstack modern web framework!
 
+# [!!! THIS REPOSITORY HAS BEEN MOVED, YOU CAN VIEW THE LATEST VERSION OF HIZZY BY CLICKING ME !!!](https://github.com/hizzyjs/hizzy)
+
 [![](https://img.shields.io/badge/Discord-black?style=for-the-badge&logo=discord)](https://discord.gg/emAhrw3mvM)
 [![npm](https://img.shields.io/npm/v/hizzy.svg?style=for-the-badge)](https://www.npmjs.com/package/hizzy)
 
