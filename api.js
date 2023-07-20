@@ -1093,7 +1093,7 @@ class API extends EventEmitter {
                 description: "re-enable all addons", enabled: true,
                 run: () => {
                     const addons = this.getAddons();
-                    for (const i in addons) addons[i].module.onDisable("shortcut");
+                    for (const i in addons) addons[i].module.disable("shortcut");
                     printer.raw.log("%c  ✓  All addons have been disabled.", "color: green");
                     for (const i in addons) addons[i].module.onEnable();
                     printer.raw.log("%c  ✓  All addons have been enabled.", "color: green");
