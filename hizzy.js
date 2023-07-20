@@ -131,13 +131,12 @@ if (isTerminal && _argv_["advanced-version"]) {
     process.exit();
 }
 if (isTerminal && _argv_["addon-init"]) {
-    const name = args[0];
-    if (!name) exit("Usage: npx hizzy --addon-init YourAddonName");
+    const name = args[0] || process.cwd().split(path.sep).slice(-1)[0];
+    const folder = path.join(process.cwd(), args[0] || "");
     if (!/^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(name)) exit("Please select a valid addon name!");
-    const cd = path.join(process.cwd(), name);
-    if (fs.existsSync(path.join(cd, name))) exit("There is already a directory at '%c" + cd + "$t'!", "color: orange");
-    fs.mkdirSync(path.join(cd, name));
-    fs.writeFileSync(path.join(cd, name, "index.js"), `const {AddonModule} = Hizzy;
+    if (fs.existsSync(folder)) exit("There is already a directory at '%c" + folder + "&t'!", "color: orange");
+    fs.mkdirSync(folder);
+    fs.writeFileSync(path.join(folder, "index.js"), `const {AddonModule} = Hizzy;
 module.exports = class MyAddon extends AddonModule {
     onLoad() {
         this.log("Loaded!");
@@ -163,13 +162,13 @@ module.exports = class MyAddon extends AddonModule {
         this.log("An error occurred in the client side:", error);
     };
 };`);
-    fs.writeFileSync(path.join(cd, name, "package.json"), `{
+    fs.writeFileSync(path.join(folder, "package.json"), `{
   "name": ${JSON.stringify(name)},
   "description": "This is an addon!",
   "version": "1.0.0",
   "main": "index.js"
 }`);
-    printer.raw.pass("A new addon has been set up at: %c" + name, "color: orange");
+    printer.dev.pass("A new addon has been set up at: %c" + name, "color: orange");
     process.exit();
 }
 if (!_argv_.build && !_argv_["no-clear"]) {
