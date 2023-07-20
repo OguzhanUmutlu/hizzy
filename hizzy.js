@@ -225,7 +225,7 @@ if (isTerminal && args[0]) {
 
     const DEFAULT_CONFIG = {
         "dev": true,
-        "port": -1,
+        "port": 1881,
         "fileRefresh": true,
         "autoBuild": true,
         "listen": true,
@@ -262,9 +262,7 @@ if (isTerminal && args[0]) {
     if (!confExists || !fs.statSync(confPath).isFile()) {
         if (confExists) fs.rmSync(confPath);
         if (_argv_.debug) printer.dev.debug("Creating the %c/" + confFileName + "&t file...", "color: orange");
-        fs.writeFileSync(confPath, `import {defineConfig} from "hizzy";
-
-export default defineConfig({
+        fs.writeFileSync(confPath, `export default Hizzy.defineConfig({
     port: 1881
 });`);
     }
